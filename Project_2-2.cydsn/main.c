@@ -113,20 +113,40 @@ int main(void)
         UART_DEBUG_PutString("I2C error while writing CTRL_REG1\r\n");
     }
    
-    
+    int16_t X_data;
+    uint8_t X_LSB, X_MSB;
     for(;;)
     {
         CyDelay(10);
+        
+        //READ LSB
         error = I2C_Peripheral_ReadRegister(LIS3DH_DEVICE_ADDRESS, 
-                                                  LIS3DH_REG_OUT_X_H,
-                                                  &status_reg);
+                                                  LIS3DH_REG_OUT_X_L,
+                                                  &X_LSB);
         if( error == NO_ERROR ) {
-            sprintf(message, "LIS3DH_STATUS_REG value: 0x%02X\r\n", status_reg);
-            UART_DEBUG_PutString(message);
+            sprintf(message, "LIS3DH_STATUS_REG value: 0x%02X\r\n", X_LSB);
+            //UART_DEBUG_PutString(message);
         }
         else {
-            UART_DEBUG_PutString("I2C error while reading LIS3DH_STATUS_REG\r\n");
+            //UART_DEBUG_PutString("I2C error while reading LIS3DH_STATUS_REG\r\n");
         }
+        
+        //READ MSB
+        error = I2C_Peripheral_ReadRegister(LIS3DH_DEVICE_ADDRESS, 
+                                                  LIS3DH_REG_OUT_X_H,
+                                                  &X_MSB);
+        if( error == NO_ERROR ) {
+            sprintf(message, "LIS3DH_STATUS_REG value: 0x%02X\r\n", X_MSB);
+            //UART_DEBUG_PutString(message);
+        }
+        else {
+            //UART_DEBUG_PutString("I2C error while reading LIS3DH_STATUS_REG\r\n");
+        }
+        
+        //merge the two bytes
+        X_data = (X_MSB<<8) | X_LSB;
+        sprintf(message, "X-data: %d\n",X_data);
+        UART_DEBUG_PutString(message);
     }
 }
 
