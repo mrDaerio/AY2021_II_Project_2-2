@@ -22,6 +22,8 @@
         NO_ERROR,           ///< No error generated
         ERROR               ///< Error generated
     } ErrorCode;
+    
+    void error_check (ErrorCode error);
 
 #endif
 /* [] END OF FILE */
