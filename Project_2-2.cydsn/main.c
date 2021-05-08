@@ -40,14 +40,12 @@ int main(void)
     sprintf(message, "STATUS REG: %d\n", status_reg);
     UART_DEBUG_PutString(message);
     
-    // Enable data rate
-    uint8_t ctrl_reg1;
-    ctrl_reg1 = 0b01110111;
-    error = set_reg (LIS3DH_CTRL_REG1, ctrl_reg1);
+    // Enable data rate  
+    error = set_datarate(LIS3DH_DATARATE_400_HZ);
     error_check(error);
-   
-    int16_t X_data;
-    uint8_t X_LSB, X_MSB;
+    
+    int16_t X_data, Y_data, Z_data;
+    uint8_t X_LSB, X_MSB, Y_LSB, Y_MSB, Z_LSB, Z_MSB;
     
     for(;;)
     {
@@ -59,11 +57,40 @@ int main(void)
         error = get_reg(LIS3DH_REG_OUT_X_H, &X_MSB);
         error_check(error);
         
+        //READ LSB Y
+        error = get_reg(LIS3DH_REG_OUT_Y_L, &Y_LSB);
+        error_check(error);
+        
+        //READ MSB Y
+        error = get_reg(LIS3DH_REG_OUT_Y_H, &Y_MSB);
+        error_check(error);
+        
+        //READ LSB Z
+        error = get_reg(LIS3DH_REG_OUT_Z_L, &Z_LSB);
+        error_check(error);
+        
+        //READ MSB Z
+        error = get_reg(LIS3DH_REG_OUT_Z_H, &Z_MSB);
+        error_check(error);
+        
+        
         //merge the two bytes
         X_data = (X_MSB<<8) | X_LSB;
         X_data = X_data >> 4;
         sprintf(message, "X-data: %d\n", X_data);
         UART_DEBUG_PutString(message);
+        
+        Y_data = (Y_MSB<<8) | Y_LSB;
+        Y_data = Y_data >> 4;
+        sprintf(message, "Y-data: %d\n", Y_data);
+        UART_DEBUG_PutString(message);
+        
+        Z_data = (Z_MSB<<8) | Z_LSB;
+        Z_data = Z_data >> 4;
+        sprintf(message, "Z-data: %d\n", Z_data);
+        UART_DEBUG_PutString(message);
+        
+        CyDelay(200);
     }
 }
 

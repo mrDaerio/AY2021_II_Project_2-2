@@ -86,6 +86,8 @@
     #define LIS3DH_REG_OUT_Z_L 0x2C /**< Z-axis acceleration data. Low value */
     #define LIS3DH_REG_OUT_Z_H 0x2D /**< Z-axis acceleration data. High value */
     
+    #define FIFO_CTRL_REG 0x2E
+    
     /** A structure to represent scales **/
     typedef enum {
       LIS3DH_RANGE_16_G = 0b11, // +/- 16g
@@ -115,8 +117,16 @@
       LIS3DH_DATARATE_LOWPOWER_5KHZ = 0b1001,
     } lis3dh_dataRate_t;
     
+        typedef enum {
+      BYPASS_MODE = 0x0,
+      FIFO_MODE = 0x1,
+      STREAM_MODE = 0x2,
+      STREAM_TO_FIFO = 0x3,      
+    } lis3dh_fifo_mode_t;
+    
     ErrorCode set_reg (uint8_t reg, uint8_t value_reg);
     ErrorCode get_reg (uint8_t reg, uint8_t* value_reg);
+    ErrorCode set_datarate (lis3dh_dataRate_t val);
     
 #endif
 
