@@ -41,7 +41,7 @@ int main(void)
     sprintf(message, "STATUS REG: %d\n", status_reg);
     UART_DEBUG_PutString(message);
     
-    // Enable data rate  
+    // Enable accelerometer
     error = set_datarate(LIS3DH_DATARATE_400_HZ);
     error_check(error);
     
@@ -91,7 +91,7 @@ int main(void)
         sprintf(message, "Z-data: %d\n", Z_data);
         UART_DEBUG_PutString(message);
         
-        CyDelay(200);
+        CyDelay(20);
     }
 }
 

@@ -62,7 +62,7 @@
         // Send stop condition
         I2C_Master_MasterSendStop();
         // Return error code
-        return error ? ERROR : NO_ERROR;    
+        return error ? I2C_READ_REGISTER_ERROR : NO_ERROR;    
         
     }
     
@@ -96,7 +96,7 @@
         // Send stop condition
         I2C_Master_MasterSendStop();
         // Return error code
-        return error ? ERROR : NO_ERROR;
+        return error ? I2C_READ_REGISTER_MULTI_ERROR : NO_ERROR;
         
     }
     
@@ -119,7 +119,7 @@
         I2C_Master_MasterSendStop();
         
         // Return error code
-        return error ? ERROR : NO_ERROR;
+        return error ? I2C_WRITE_REGISTER_ERROR : NO_ERROR;
         
     }
     
@@ -144,7 +144,7 @@
                         // Send stop condition
                         I2C_Master_MasterSendStop();
                         // Return error code
-                        return ERROR;
+                        return I2C_WRITE_REGISTER_ERROR;
                     }
                     counter--;
                 }
@@ -153,7 +153,7 @@
         // Send stop condition in case something didn't work out correctly
         I2C_Master_MasterSendStop();
         // Return error code
-        return error ? ERROR : NO_ERROR;
+        return error ? I2C_WRITE_REGISTER_MULTI_ERROR : NO_ERROR;
 		
     }
     

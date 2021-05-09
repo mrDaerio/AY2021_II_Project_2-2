@@ -1,15 +1,4 @@
 /**
-*   \file ErrorCodes.h
-*   \brief Error codes definition.
-*   
-*   This file contains several definition of error codes to be used throughout
-*   the project to be consisted with the written firmware.
-*
-*   \author Davide Marzorati
-*   \date September 12, 2019
-*/
-
-/**
 *   \brief Error codes.
 * 
 *   This definition defines several error codes that will
@@ -20,7 +9,12 @@
     
     typedef enum {
         NO_ERROR,           ///< No error generated
-        ERROR               ///< Error generated
+        I2C_READ_REGISTER_ERROR,  ///< Error in reading I2C register 
+        I2C_WRITE_REGISTER_ERROR,   ///< Error in writing I2C register 
+        I2C_READ_REGISTER_MULTI_ERROR,  ///< Error in reading multiple I2C registers 
+        I2C_WRITE_REGISTER_MULTI_ERROR,  ///< Error in writing multiple I2C registers
+        DATARATE_SET_FAIL,  ///<error in setting data rate, check set_datarate function
+        FIFO_SET_FAIL,  ///<error in setting FIFO, check FIFO_set function
     } ErrorCode;
     
     void error_check (ErrorCode error);
