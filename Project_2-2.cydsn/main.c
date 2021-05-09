@@ -9,6 +9,7 @@
  *
  * ========================================
 */
+
 #include "project.h"
 #include "stdio.h"
 #include "I2C_Interface.h"
@@ -28,14 +29,14 @@ int main(void)
     
     /*      I2C Master Read - WHOAMI Register       */
     uint8_t whoami_reg;
-    ErrorCode error = get_reg(LIS3DH_WHO_AM_I_REG_ADDR, &whoami_reg);
+    ErrorCode error = get_reg(LIS3DH_REG_WHOAMI, &whoami_reg);
     error_check(error);
     sprintf(message, "WHO AM I: %d\n", whoami_reg);
     UART_DEBUG_PutString(message);
     
     /*      I2C Master Read - STATUS Register       */
     uint8_t status_reg;
-    error = get_reg(LIS3DH_STATUS_REG, &status_reg);
+    error = get_reg(LIS3DH_REG_STATUS1, &status_reg);
     error_check(error);
     sprintf(message, "STATUS REG: %d\n", status_reg);
     UART_DEBUG_PutString(message);

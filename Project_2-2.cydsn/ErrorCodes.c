@@ -17,12 +17,7 @@
 
 void error_check (ErrorCode error)
 {   
-    if( error == NO_ERROR ) {
-        //UART_DEBUG_PutString("No error");
-    }
-    else {
-        UART_DEBUG_PutString("Error");
-    }
+    if(error == ERROR) UART_DEBUG_PutString("Error");
 }
 
 /* [] END OF FILE */
