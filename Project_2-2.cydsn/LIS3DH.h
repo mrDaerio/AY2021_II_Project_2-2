@@ -23,7 +23,7 @@
 
 #ifndef __LIS3DH_H
     #define __LIS3DH_H
-
+    #define FIFO_SIZE 32
     /** I2C ADDRESS/BITS **/
     #define LIS3DH_DEVICE_ADDRESS (0x18) // if SDO/SA0 is 3V, its 0x19
 
@@ -365,6 +365,8 @@
     ErrorCode set_reg (uint8_t reg, uint8_t value_reg);
     ErrorCode get_reg (uint8_t reg, uint8_t* value_reg);
     ErrorCode set_datarate (lis3dh_dataRate_t val);
+    ErrorCode FIFO_set(uint8_t val, lis3dh_fifo_mode_t mode);
+    void FIFO_read (void);
 
 #endif
 

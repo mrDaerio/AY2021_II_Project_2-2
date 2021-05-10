@@ -15,13 +15,17 @@
 #include "I2C_Interface.h"
 #include "LIS3DH.h"
 #include "ErrorCodes.h"
+#include "InterruptRoutines.h"
 
+uint8_t flag = 0;
+int16_t x_buffer[FIFO_SIZE], y_buffer[FIFO_SIZE], z_buffer[FIFO_SIZE];
 
 int main(void)
 {
     CyGlobalIntEnable; /* Enable global interrupts. */
     I2C_Peripheral_Start();
     UART_DEBUG_Start();
+    isr_FIFO_StartEx(Custom_ISR_FIFO);
     
     char message[50] = {'\0'};
     
@@ -45,53 +49,27 @@ int main(void)
     error = set_datarate(LIS3DH_DATARATE_400_HZ);
     error_check(error);
     
-    int16_t X_data, Y_data, Z_data;
-    uint8_t X_LSB, X_MSB, Y_LSB, Y_MSB, Z_LSB, Z_MSB;
+    //enables FIFO
+    error = FIFO_set(1, FIFO_MODE);
+    error_check(error);
     
     for(;;)
     {
-        //READ LSB X
-        error = get_reg(LIS3DH_REG_OUT_X_L, &X_LSB);
-        error_check(error);
-        
-        //READ MSB X
-        error = get_reg(LIS3DH_REG_OUT_X_H, &X_MSB);
-        error_check(error);
-        
-        //READ LSB Y
-        error = get_reg(LIS3DH_REG_OUT_Y_L, &Y_LSB);
-        error_check(error);
-        
-        //READ MSB Y
-        error = get_reg(LIS3DH_REG_OUT_Y_H, &Y_MSB);
-        error_check(error);
-        
-        //READ LSB Z
-        error = get_reg(LIS3DH_REG_OUT_Z_L, &Z_LSB);
-        error_check(error);
-        
-        //READ MSB Z
-        error = get_reg(LIS3DH_REG_OUT_Z_H, &Z_MSB);
-        error_check(error);
-        
-        
-        //merge the two bytes
-        X_data = (X_MSB<<8) | X_LSB;
-        X_data = X_data >> 4;
-        sprintf(message, "X-data: %d\n", X_data);
+        if(flag){
+            flag = 0;
+            for(int i=0;i<FIFO_SIZE;i++){
+        sprintf(message, "X-data: %d", x_buffer[i]);
         UART_DEBUG_PutString(message);
         
-        Y_data = (Y_MSB<<8) | Y_LSB;
-        Y_data = Y_data >> 4;
-        sprintf(message, "Y-data: %d\n", Y_data);
+        sprintf(message, "  Y-data: %d", y_buffer[i]);
         UART_DEBUG_PutString(message);
         
-        Z_data = (Z_MSB<<8) | Z_LSB;
-        Z_data = Z_data >> 4;
-        sprintf(message, "Z-data: %d\n", Z_data);
+        sprintf(message, "  Z-data: %d\n", z_buffer[i]);
         UART_DEBUG_PutString(message);
+            }
+            UART_DEBUG_PutString("\n");
+        }
         
-        CyDelay(20);
     }
 }
 
