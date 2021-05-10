@@ -27,6 +27,8 @@ int main(void)
     UART_DEBUG_Start();
     isr_FIFO_StartEx(Custom_ISR_FIFO);
     
+    PWM_LED_Start();
+    
     char message[50] = {'\0'};
     
     CyDelay(5); //"The boot procedure is complete about 5 ms after device power-up."
@@ -55,6 +57,12 @@ int main(void)
     
     for(;;)
     {
+        CyDelay(10);
+        if (!I2C_Peripheral_IsDeviceConnected(LIS3DH_DEVICE_ADDRESS))
+                PWM_LED_WriteCompare(50);
+        else
+            PWM_LED_WriteCompare(99);
+        
         if(flag){
             flag = 0;
             for(int i=0;i<FIFO_SIZE;i++){

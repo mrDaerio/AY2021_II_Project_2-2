@@ -105,6 +105,14 @@
      *enabled) HPIS1 High pass filter enabled for AOI function on interrupt 1, (0:
      *filter bypassed; 1: filter enabled)
      */
+    
+    #define LIS3DH_REG_CTRL1_DATA_RATE_BITS_MASK 0b11110000;
+    #define LIS3DH_REG_CTRL5_FIFO_SET_BITS_MASK 0b01000000
+    #define LIS3DH_REG_FIFOCTRL_FIFO_SET_BITS_MASK 0b11000000;
+    #define LIS3DH_REG_CTRL3_FIFO_INT1_BITS_MASK 0b00000010;
+    
+    
+    
     #define LIS3DH_REG_CTRL2 0x21
     
     /*!
@@ -203,6 +211,7 @@
      *   FTH4:0   Default value: 0
      */
     #define LIS3DH_REG_FIFOCTRL 0x2E
+   
     
     #define LIS3DH_REG_FIFOSRC                                                     \
       0x2F /**< FIFO_SRC_REG [WTM, OVRN_FIFO, EMPTY, FSS4, FSS3, FSS2, FSS1, FSS0] \
