@@ -33,73 +33,57 @@ ErrorCode get_reg (uint8_t reg, uint8_t* value_reg)
     return error;
 }
 
-ErrorCode set_datarate (lis3dh_dataRate_t val)
+ErrorCode set_reg_masked_only (uint8_t reg, uint8_t mask, uint8_t value_reg)
 {
+    //read register
     uint8_t curr;
-    ErrorCode err = get_reg(LIS3DH_REG_CTRL1, &curr);
-    if(err) return DATARATE_SET_FAIL;
-    val = (val<<4);
-    curr &= ~LIS3DH_REG_CTRL1_DATA_RATE_BITS_MASK;
-    val |= curr;
-    err = set_reg(LIS3DH_REG_CTRL1, val);
+    ErrorCode err = get_reg(reg, &curr);
+    if (err) return err;
+
+    //reset mask bits preserving the others
+    curr &= ~mask;
+
+    //reset unused pattern bits preserving the useful ones (not necessary if value_reg pattern is correct)
+    //maybe use as check? e.g. if (value_reg == value_reg & mask) -> correct pattern
+    value_reg &= mask;
+
+    //set pattern bits into the register
+    curr |= value_reg;
+    err = set_reg(reg,curr);
+
     return err;
 }
 
+ErrorCode set_datarate (lis3dh_dataRate_t val)
+{
+    ErrorCode err = set_reg_masked_only(LIS3DH_REG_CTRL1,
+                                        LIS3DH_REG_CTRL1_DATA_RATE_BITS_MASK,
+                                        val<<4);
+    return err ? DATARATE_SET_FAIL : NO_ERROR;
+}
+
 ErrorCode FIFO_set(uint8_t val, lis3dh_fifo_mode_t mode)
-{  
+{
     //Enables or disables FIFO
-    uint8_t curr;
-    char message[50] = {'\0'};
-    ErrorCode err = get_reg(LIS3DH_REG_CTRL5, &curr);
-    /*
-    sprintf(message, "\nLIS3DH_REG_CTRL5 BEFORE: %d", curr);
-        UART_DEBUG_PutString(message);
-    */
+    ErrorCode err = set_reg_masked_only(LIS3DH_REG_CTRL5,
+                                        LIS3DH_REG_CTRL5_FIFO_SET_BITS_MASK,
+                                        val<<6);
     if(err) return FIFO_SET_FAIL;
-    curr &= ~LIS3DH_REG_CTRL5_FIFO_SET_BITS_MASK;
-    curr |= (val<<6);
-    err = set_reg(LIS3DH_REG_CTRL5, curr);
-    /*
-    err = get_reg(LIS3DH_REG_CTRL5, &curr);
-    sprintf(message, "\nLIS3DH_REG_CTRL5 AFTER: %d", curr);
-        UART_DEBUG_PutString(message);
-    */
-    if(err) return FIFO_SET_FAIL;
-   
+
     //set FIFO mode
-    err = get_reg(LIS3DH_REG_FIFOCTRL, &curr);
-    /*
-        sprintf(message, "\nLIS3DH_REG_FIFOCTRL BEFORE: %d", curr);
-        UART_DEBUG_PutString(message);
-    */
-    if(err) return FIFO_SET_FAIL;
-    curr &= ~LIS3DH_REG_FIFOCTRL_FIFO_SET_BITS_MASK;
-    mode = (mode<<6);
-    mode |= curr;
-    err = set_reg(LIS3DH_REG_FIFOCTRL, mode);
-    /*
-        err = get_reg(LIS3DH_REG_FIFOCTRL, &curr);
-    sprintf(message, "\nLIS3DH_REG_FIFOCTRL AFTER: %d should be %d", curr, mode);
-        UART_DEBUG_PutString(message);
-    */
+    err = set_reg_masked_only(LIS3DH_REG_FIFOCTRL,
+                              LIS3DH_REG_FIFOCTRL_FIFO_MODE_BITS_MASK,
+                              mode<<6);
+    if (err) return FIFO_SET_FAIL;
+
     //overrun interrupt enable/disable
-    err = get_reg(LIS3DH_REG_CTRL3, &curr);
-    /*
-    sprintf(message, "\nLIS3DH_REG_CTRL3 BEFORE: %d", curr);
-    UART_DEBUG_PutString(message);
-    */
-    if(err) return FIFO_SET_FAIL;
-    curr &= ~LIS3DH_REG_CTRL3_FIFO_INT1_BITS_MASK;
-    val = (val<<1);
-    val |= curr;
-    err = set_reg(LIS3DH_REG_CTRL3, val);
-    /*
-        err = get_reg(LIS3DH_REG_CTRL3, &curr);
-        sprintf(message, "\nLIS3DH_REG_CTRL3 AFTER: %d should be %d", curr, val);
-        UART_DEBUG_PutString(message);
-    */
-    return err;    
-    
+    err = set_reg_masked_only(LIS3DH_REG_CTRL3,
+                              LIS3DH_REG_CTRL3_FIFO_INT1_BITS_MASK,
+                              val<<1);
+
+
+    return err ? FIFO_SET_FAIL : NO_ERROR;
+
 }
 
 void FIFO_read()

@@ -17,6 +17,9 @@
 #include "ErrorCodes.h"
 #include "InterruptRoutines.h"
 
+#define LED_ON 99
+#define LED_BLINK 50
+
 uint8_t flag = 0;
 int16_t x_buffer[FIFO_SIZE], y_buffer[FIFO_SIZE], z_buffer[FIFO_SIZE];
 
@@ -59,9 +62,9 @@ int main(void)
     {
         CyDelay(10);
         if (!I2C_Peripheral_IsDeviceConnected(LIS3DH_DEVICE_ADDRESS))
-                PWM_LED_WriteCompare(50);
+                PWM_LED_WriteCompare(LED_BLINK);
         else
-            PWM_LED_WriteCompare(99);
+            PWM_LED_WriteCompare(LED_ON);
         
         if(flag){
             flag = 0;
