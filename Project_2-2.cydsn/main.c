@@ -28,6 +28,7 @@ int main(void)
     CyGlobalIntEnable; /* Enable global interrupts. */
     I2C_Peripheral_Start();
     UART_DEBUG_Start();
+    UART_BT_Start();
     isr_FIFO_StartEx(Custom_ISR_FIFO);
     
     PWM_LED_Start();
@@ -69,16 +70,10 @@ int main(void)
         if(flag){
             flag = 0;
             for(int i=0;i<FIFO_SIZE;i++){
-        sprintf(message, "X-data: %d", x_buffer[i]);
-        UART_DEBUG_PutString(message);
-        
-        sprintf(message, "  Y-data: %d", y_buffer[i]);
-        UART_DEBUG_PutString(message);
-        
-        sprintf(message, "  Z-data: %d\n", z_buffer[i]);
-        UART_DEBUG_PutString(message);
+                sprintf(message, "X: %d Y: %d Z: %d\n", x_buffer[i],y_buffer[i],z_buffer[i]);
+                UART_BT_PutString(message);
             }
-            UART_DEBUG_PutString("\n");
+            UART_BT_PutString("\n");
         }
         
     }
