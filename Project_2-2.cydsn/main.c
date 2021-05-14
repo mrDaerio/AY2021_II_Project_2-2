@@ -21,7 +21,9 @@
 #define LED_BLINK 50
 
 uint8_t flag = 0;
+uint8_t buffer[8];
 int16_t x_buffer[FIFO_SIZE], y_buffer[FIFO_SIZE], z_buffer[FIFO_SIZE];
+
 
 int main(void)
 {
@@ -53,11 +55,20 @@ int main(void)
     // Enable accelerometer
     error = set_datarate(LIS3DH_DATARATE_400_HZ);
     error_check(error);
-    
+    //enable high res mode
+    error = set_reg_masked_only(LIS3DH_REG_CTRL4,
+                                        0b00001000,
+                                        1<<3);
+    error_check(error);
+    error = get_reg(LIS3DH_REG_CTRL4, &whoami_reg);
+    error_check(error);
+    sprintf(message, "CTRL4: %d\n", whoami_reg);
+    UART_DEBUG_PutString(message);
     //enables FIFO
     error = FIFO_set(1, FIFO_MODE);
     error_check(error);
-    
+    buffer[0] = 0xA0;
+    buffer[7] = 0xC0;
     for(;;)
     {
         CyDelay(10);
@@ -69,19 +80,21 @@ int main(void)
         if(flag){
             flag = 0;
             for(int i=0;i<FIFO_SIZE;i++){
-        sprintf(message, "X-data: %d", x_buffer[i]);
-        UART_DEBUG_PutString(message);
-        
-        sprintf(message, "  Y-data: %d", y_buffer[i]);
-        UART_DEBUG_PutString(message);
-        
-        sprintf(message, "  Z-data: %d\n", z_buffer[i]);
-        UART_DEBUG_PutString(message);
+                buffer[1] =x_buffer[i] >> 8;
+                buffer[2] = x_buffer[i];
+                buffer[3] =y_buffer[i] >> 8;
+                buffer[4] = y_buffer[i];
+                buffer[5] =z_buffer[i] >> 8;
+                buffer[6] = z_buffer[i];
+                UART_DEBUG_PutArray(buffer, 8);
             }
-            UART_DEBUG_PutString("\n");
+            
         }
         
     }
 }
+
+/* [] END OF FILE */
+
 
 /* [] END OF FILE */
