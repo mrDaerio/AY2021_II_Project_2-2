@@ -1,0 +1,50 @@
+#:kivy 1.11
+#:import Toolbar toolbar
+#:import BottomBar bottom_bar 
+#:import GraphTabs graph_tabs 
+
+<ContainerLayout>:
+    toolbar: _toolbar
+    bottom_bar: _bottom_bar
+    graph_w: _graph
+    streaming_button: _streaming_button
+    orientation: 'vertical'
+    spacing: 5
+    padding: 10
+    BoxLayout:
+        padding: '2sp'
+        canvas:
+            Color:
+                rgba: 1, 1, 1, .6
+            Rectangle:
+                size: self.size
+                pos: self.pos
+        size_hint: 1, None
+        height: '45sp'
+        Label:
+            size_hint: None, 1
+            width: '180sp'
+            text: 'PSoC-LIS3DH GUI'
+        Widget:
+        Button:
+            size_hint: None, 1
+            width: '108sp'
+            text: 'Start'
+            id: _streaming_button
+            disabled: True
+            on_release: root.streaming()
+    BoxLayout:
+        orientation:'horizontal'
+        size_hint: 1.0, 0.8
+        spacing: 10
+        Toolbar:
+            id: _toolbar
+            size_hint: 0.2, 1.0
+            disabled: True
+            bottom_widget: _bottom_bar
+            on_message_string: self.bottom_widget.update_text
+        GraphTabs:
+            id: _graph
+    BottomBar:
+        id: _bottom_bar
+        size_hint: 1.0, 0.1
