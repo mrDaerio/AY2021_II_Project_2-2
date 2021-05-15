@@ -31,7 +31,7 @@ int main(void)
     UART_DEBUG_Start();
     UART_BT_Start();
     isr_FIFO_StartEx(Custom_ISR_FIFO);
-    
+    isr_BT_StartEx(Custom_ISR_RXBT);
     PWM_LED_Start();
     
     char message[50] = {'\0'};
@@ -52,8 +52,8 @@ int main(void)
     sprintf(message, "STATUS REG: %d\n", status_reg);
     UART_DEBUG_PutString(message);
     
-    // Enable accelerometer
-    error = set_datarate(LIS3DH_DATARATE_1344Hz);
+    //Accelerometer powered down
+    error = set_datarate(LIS3DH_DATARATE_POWERDOWN);
     error_check(error);
     
     //enables FIFO

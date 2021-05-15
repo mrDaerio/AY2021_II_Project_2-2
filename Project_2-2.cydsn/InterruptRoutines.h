@@ -7,6 +7,7 @@
    
     
     CY_ISR_PROTO(Custom_ISR_FIFO);
+    CY_ISR_PROTO(Custom_ISR_RXBT);
    
     
 #endif
