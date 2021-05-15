@@ -361,7 +361,7 @@
       LIS3DH_DATARATE_1_HZ = 0b0001,   //    1Hz
       LIS3DH_DATARATE_POWERDOWN = 0,
       LIS3DH_DATARATE_LOWPOWER_1K6HZ = 0b1000,
-      LIS3DH_DATARATE_LOWPOWER_5KHZ = 0b1001,
+      LIS3DH_DATARATE_1344Hz = 0b1001,
     } lis3dh_dataRate_t;
     
     typedef enum {

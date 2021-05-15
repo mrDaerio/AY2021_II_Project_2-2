@@ -14,7 +14,7 @@
 #include "project.h"
 #include "stdio.h"
 
-extern uint16_t x_buffer[FIFO_SIZE], y_buffer[FIFO_SIZE], z_buffer[FIFO_SIZE];
+extern int16_t x_buffer[FIFO_SIZE], y_buffer[FIFO_SIZE], z_buffer[FIFO_SIZE];
 extern uint8_t flag;
 
 ErrorCode set_reg (uint8_t reg, uint8_t value_reg)
@@ -91,7 +91,6 @@ void FIFO_read()
     ErrorCode error;
     int16_t X_data, Y_data, Z_data;
     uint8_t X_LSB, X_MSB, Y_LSB, Y_MSB, Z_LSB, Z_MSB;
-    
     for(int i = 0; i<FIFO_SIZE; i++){
         //READ LSB X
         error = get_reg(LIS3DH_REG_OUT_X_L, &X_LSB);
@@ -128,6 +127,7 @@ void FIFO_read()
         x_buffer[i] = X_data;
         y_buffer[i] = Y_data;
         z_buffer[i] = Z_data;
+        
         
     }
     

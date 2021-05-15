@@ -16,9 +16,10 @@
 #include "project.h"
 
 void error_check (ErrorCode error)
-{   
+{   if(error != 0) PWM_LED_WriteCompare(50);
     switch(error){
     case NO_ERROR:    ///< No error generated
+       PWM_LED_WriteCompare(99); 
        break;
     case I2C_READ_REGISTER_ERROR:
         UART_DEBUG_PutString("\nError in reading I2C register");
