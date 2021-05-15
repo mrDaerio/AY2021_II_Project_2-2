@@ -32,57 +32,41 @@ CY_ISR(Custom_ISR_RXBT)
         
         case 'B':
         case 'b':
-        error = set_datarate(LIS3DH_DATARATE_1344Hz);
+        error = set_datarate(datarate);
         error_check(error);
         UART_DEBUG_PutString("START\n");
             break;
         
         case '0':
-        error = set_datarate(LIS3DH_DATARATE_1_HZ);
-        error_check(error);
-        UART_DEBUG_PutString("Changed at 1 Hz\n");
+        datarate = LIS3DH_DATARATE_1_HZ;
             break;
         
         case '1':
-        error = set_datarate(LIS3DH_DATARATE_10_HZ);
-        error_check(error);
-        UART_DEBUG_PutString("Changed at 10 Hz\n");
+        datarate = LIS3DH_DATARATE_10_HZ;
             break;
         
         case '2':
-        error = set_datarate(LIS3DH_DATARATE_25_HZ);
-        error_check(error);
-        UART_DEBUG_PutString("Changed at 25 Hz\n");
+        datarate = LIS3DH_DATARATE_25_HZ;
             break;
         
         case '3':
-        error = set_datarate(LIS3DH_DATARATE_50_HZ);
-        error_check(error);
-        UART_DEBUG_PutString("Changed at 50 Hz\n");
+        datarate = LIS3DH_DATARATE_50_HZ;
             break;
         
         case '4':
-        error = set_datarate(LIS3DH_DATARATE_100_HZ);
-        error_check(error);
-        UART_DEBUG_PutString("Changed at 100 Hz\n");
+        datarate = LIS3DH_DATARATE_100_HZ;
             break;
         
         case '5':
-        error = set_datarate(LIS3DH_DATARATE_200_HZ);
-        error_check(error);
-        UART_DEBUG_PutString("Changed at 200 Hz\n");
+        datarate = LIS3DH_DATARATE_200_HZ;
             break;
         
         case '6':
-        error = set_datarate(LIS3DH_DATARATE_400_HZ);
-        error_check(error);
-        UART_DEBUG_PutString("Changed at 400 Hz\n");
+        datarate = LIS3DH_DATARATE_400_HZ;
             break;
         
         case '7':
-        error = set_datarate(LIS3DH_DATARATE_1344Hz);
-        error_check(error);
-        UART_DEBUG_PutString("Changed at 1344 Hz\n");
+        datarate = LIS3DH_DATARATE_1344Hz;
             break;
         default:
             break;
