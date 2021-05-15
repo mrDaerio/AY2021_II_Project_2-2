@@ -363,7 +363,9 @@ class KivySerial(EventDispatcher, metaclass=Singleton):
             '25 Hz': '2',
             '50 Hz': '3',
             '100 Hz': '4',
-            '200 Hz': '5'
+            '200 Hz': '5', 
+            '400 Hz': '6',
+            '1344 Hz': '7'
         }
         if (self.port.is_open):
             try:
