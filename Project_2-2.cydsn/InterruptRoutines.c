@@ -29,11 +29,16 @@ CY_ISR(Custom_ISR_RXBT)
             break;
 
         case 'b':
+        // Set the datarate
         error = set_datarate(datarate);
+        error_check(error);
+        // Set the full scale range
+        error = set_range(fsc);
         error_check(error);
         UART_DEBUG_PutString("START\n");
             break;
         
+        // Different possibilities for the datarate
         case '0':
         datarate = LIS3DH_DATARATE_1_HZ;
             break;
@@ -64,6 +69,23 @@ CY_ISR(Custom_ISR_RXBT)
         
         case '7':
         datarate = LIS3DH_DATARATE_1344Hz;
+            break;
+        
+        // Different possibilities for the full scale range
+        case 'w':
+        fsc = LIS3DH_RANGE_2_G;
+            break;
+        
+        case 'x':
+        fsc = LIS3DH_RANGE_4_G;
+            break;
+        
+        case 'j':
+        fsc = LIS3DH_RANGE_8_G;
+            break;
+        
+        case 'k':
+        fsc = LIS3DH_RANGE_16_G;
             break;
         default:
             break;

@@ -376,6 +376,7 @@
     ErrorCode get_reg (uint8_t reg, uint8_t* value_reg);
     ErrorCode set_reg_masked_only (uint8_t reg, uint8_t mask, uint8_t value_reg);
     ErrorCode set_datarate (lis3dh_dataRate_t val);
+    ErrorCode set_range (lis3dh_range_t val);
     ErrorCode FIFO_set(uint8_t val, lis3dh_fifo_mode_t mode);
     void FIFO_read (void);
 

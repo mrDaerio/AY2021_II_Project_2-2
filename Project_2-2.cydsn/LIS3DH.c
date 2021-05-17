@@ -67,12 +67,12 @@ ErrorCode set_datarate (lis3dh_dataRate_t val)
 }
 
 // Function to set the full scale range of the LIS3DH
-ErrorCode set_range (lis3dh_dataRate_t val)
+ErrorCode set_range (lis3dh_range_t val)
 {
     ErrorCode err = set_reg_masked_only(LIS3DH_REG_CTRL4,
                                         LIS3DH_REG_CTRL1_RANGE_BITS_MASK,
                                         val<<4);
-    return err ? DATARATE_SET_FAIL : NO_ERROR;
+    return err ? FSR_SET_FAIL : NO_ERROR;
 }
 
 // Function to activate and set the FIFO

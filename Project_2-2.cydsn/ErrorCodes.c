@@ -36,6 +36,9 @@ void error_check (ErrorCode error)
     case DATARATE_SET_FAIL:
         UART_DEBUG_PutString("\nError in setting data rate, check set_datarate function");
         break;
+    case FSR_SET_FAIL:
+        UART_DEBUG_PutString("\nError in setting fsr, check set_fsr function");
+        break;
     case FIFO_SET_FAIL:
         UART_DEBUG_PutString("\nError in setting FIFO, check FIFO_set function");   
         break;
