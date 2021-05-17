@@ -86,20 +86,18 @@ int main(void)
             flag = 0;
             for(int i=0; i<FIFO_SIZE; i++){
                 
-                buffer[1] = x_buffer[XH] >> 8;
-                buffer[2] = x_buffer[XL];
-                buffer[3] = y_buffer[YH] >> 8;
-                buffer[4] = y_buffer[YL];
-                buffer[5] = z_buffer[ZH] >> 8;
-                buffer[6] = z_buffer[ZL];
+                buffer[XH] = x_buffer[i] >> 8;
+                buffer[XL] = x_buffer[i];
+                buffer[YH] = y_buffer[i] >> 8;
+                buffer[YL] = y_buffer[i];
+                buffer[ZH] = z_buffer[i] >> 8;
+                buffer[ZL] = z_buffer[i];
                 
-                // UART_DEBUG_PutArray(buffer, 8);
+                UART_DEBUG_PutArray(buffer, 8);
                 UART_BT_PutArray(buffer, BUFFER_SIZE);
 
             }
-            // UART_BT_PutString("\n");
-        }
-        
+        }       
     }
 }
 
