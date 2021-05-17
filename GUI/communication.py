@@ -112,6 +112,15 @@ class KivySerial(EventDispatcher, metaclass=Singleton):
     sample_rate = NumericProperty(1)
 
     ##
+    #   @brief          Full Scale Range set on the board.
+    #
+    #   This is the true full scale range value which is set on the board.
+    #   It can be used to compare the full scale range of retrieved values
+    #   to the theoretical one.
+    #
+    full_scale_range = NumericProperty(2)
+
+    ##
     #  @brief           Initialize the class.
     #
     #  @param[in]       baudrate: the desired baudrate for serial communication.
@@ -335,8 +344,8 @@ class KivySerial(EventDispatcher, metaclass=Singleton):
             temp_data = 0xFFFF - temp_data
             temp_data = temp_data + 1
             temp_data = - temp_data
-        #temp_data = temp_data >> 6  # 6-byte shift since we are in normal mode
-        #temp_data = temp_data * 4   # Sensitivity of 4 mg/digit in normal mode, +/-2g
+        # temp_data = temp_data >> 6  # 6-byte shift since we are in normal mode
+        # temp_data = temp_data * 4   # Sensitivity of 4 mg/digit in normal mode, +/-2g
         return temp_data / 1000.
 
     ##
@@ -374,6 +383,27 @@ class KivySerial(EventDispatcher, metaclass=Singleton):
                 self.sample_rate = int(value.split(' ')[0])
             except:
                 self.message_string = "Could not update sample rate"
+
+    ##
+    #   @brief          Update full scale range on board
+    #
+    #   Update the accelerometer sample rate based on selected value.
+    #   @param[in]      value: the desired sample rate to be set.
+    def update_fsr_on_board(self, value):
+        fsr_dict = {
+            '+/- 2 g': 'w',
+            '+/- 4 g': 'x',
+            '+/- 8 g': 'j',
+            '+/- 16 g': 'k'
+
+        }
+        if (self.port.is_open):
+            #try:
+            self.port.write(fsr_dict[value].encode('utf-8'))
+            self.message_string = f'Updated full scale range to {value}'
+            self.full_scale_range = int(value.split(' ')[1])
+            #except:
+                #self.message_string = "Could not update full scale range"
 
     ##
     #   @brief          Get if serial port is connected.

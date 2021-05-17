@@ -256,7 +256,7 @@ class LIS3DHTabbedPanelItem(TabbedPanelItem):
         self.x_plot.points = zip(self.x_points, self.x_axis_points)
         self.y_plot.points = zip(self.x_points, self.y_axis_points)
         self.z_plot.points = zip(self.x_points, self.z_axis_points)
-
+        
         if (samples_per_second > 60):
             self.n_points_per_update = 5
         else:

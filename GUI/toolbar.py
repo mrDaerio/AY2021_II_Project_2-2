@@ -27,6 +27,14 @@ class Toolbar(BoxLayout):
         popup = SampleRateDialog()
         popup.open()
 
+    def full_scale_range_dialog(self):
+        """
+        @brief Open popup for wave selection.
+        """
+        self.message_string = "Range Selection Dialog"
+        popup = FullScaleRangeDialog()
+        popup.open()
+
 
 
 class SampleRateDialog(Popup):
@@ -53,16 +61,25 @@ class SampleRateDialog(Popup):
            self.board.update_sample_rate_on_board(self.sample_rate_spinner.text)
         self.dismiss()
 
-class RangeSelectDialog(Popup):
+
+class FullScaleRangeDialog(Popup):
     """
     @brief Popup to allow range selection 
     """
-    range_spinner = ObjectProperty(None)
+    fsr_select_spinner = ObjectProperty(None)
 
     def __init__(self, **kwargs):
-        super(RangeSelectDialog, self).__init__(**kwargs)
+        super(FullScaleRangeDialog, self).__init__(**kwargs)
         self.board = KivySerial()
 
+    def on_sample_rate_spinner(self, instance, value):
+        self.fsr_select_spinner.text = f'{self.board.full_scale_range}'
+
+    ##
+    #   @brief          Callback called when update button is pressed.
+    #
+    #   If the board is connected, update the full scale range.
+    #
     def update_pressed(self):
         """
         @brief Callback called when update button is pressed.
@@ -70,5 +87,5 @@ class RangeSelectDialog(Popup):
         If the board is connected, update the range selection.
         """
         if (self.board.is_connected()):
-            self.board.select_range(self.range_spinner.text)
+            self.board.update_fsr_on_board(self.fsr_select_spinner.text)
         self.dismiss()
