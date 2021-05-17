@@ -17,6 +17,7 @@
 extern int16_t x_buffer[FIFO_SIZE], y_buffer[FIFO_SIZE], z_buffer[FIFO_SIZE];
 extern uint8_t flag;
 
+// Function to set a general register of the LIS3DH with value
 ErrorCode set_reg (uint8_t reg, uint8_t value_reg)
 {
     ErrorCode error = I2C_Peripheral_WriteRegister(LIS3DH_DEVICE_ADDRESS, 
@@ -25,6 +26,7 @@ ErrorCode set_reg (uint8_t reg, uint8_t value_reg)
     return error;
 }
 
+// Function to read a general register of the LIS3DH 
 ErrorCode get_reg (uint8_t reg, uint8_t* value_reg)
 {
     ErrorCode error = I2C_Peripheral_ReadRegister(LIS3DH_DEVICE_ADDRESS, 
@@ -33,6 +35,7 @@ ErrorCode get_reg (uint8_t reg, uint8_t* value_reg)
     return error;
 }
 
+// Function to set only specific bits of a general register with a mask
 ErrorCode set_reg_masked_only (uint8_t reg, uint8_t mask, uint8_t value_reg)
 {
     //read register
@@ -54,6 +57,7 @@ ErrorCode set_reg_masked_only (uint8_t reg, uint8_t mask, uint8_t value_reg)
     return err;
 }
 
+// Function to set the datarate of the LIS3DH
 ErrorCode set_datarate (lis3dh_dataRate_t val)
 {
     ErrorCode err = set_reg_masked_only(LIS3DH_REG_CTRL1,
@@ -62,6 +66,16 @@ ErrorCode set_datarate (lis3dh_dataRate_t val)
     return err ? DATARATE_SET_FAIL : NO_ERROR;
 }
 
+// Function to set the full scale range of the LIS3DH
+ErrorCode set_range (lis3dh_dataRate_t val)
+{
+    ErrorCode err = set_reg_masked_only(LIS3DH_REG_CTRL4,
+                                        LIS3DH_REG_CTRL1_RANGE_BITS_MASK,
+                                        val<<4);
+    return err ? DATARATE_SET_FAIL : NO_ERROR;
+}
+
+// Function to activate and set the FIFO
 ErrorCode FIFO_set(uint8_t val, lis3dh_fifo_mode_t mode)
 {
     //Enables or disables FIFO
@@ -86,6 +100,7 @@ ErrorCode FIFO_set(uint8_t val, lis3dh_fifo_mode_t mode)
 
 }
 
+// Function to read the samples in the FIFO
 void FIFO_read()
 {
     ErrorCode error;
