@@ -17,20 +17,17 @@ CY_ISR(Custom_ISR_RXBT)
     char ch_received = UART_BT_GetChar();
     switch(ch_received)
     {
-        case 'V':
         case 'v':
         UART_BT_PutString("$$$LIS");
         UART_DEBUG_PutString("COMMUNICATION START\n");
             break;
-        
-        case 'S':
+
         case 's':
         error = set_datarate(LIS3DH_DATARATE_POWERDOWN);
         error_check(error);
         UART_DEBUG_PutString("STOP\n");
             break;
-        
-        case 'B':
+
         case 'b':
         error = set_datarate(datarate);
         error_check(error);

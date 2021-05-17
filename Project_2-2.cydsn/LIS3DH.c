@@ -92,31 +92,31 @@ void FIFO_read()
     int16_t X_data, Y_data, Z_data;
     uint8_t X_LSB, X_MSB, Y_LSB, Y_MSB, Z_LSB, Z_MSB;
     for(int i = 0; i<FIFO_SIZE; i++){
-        //READ LSB X
+        // READ LSB X
         error = get_reg(LIS3DH_REG_OUT_X_L, &X_LSB);
         error_check(error);
         
-        //READ MSB X
+        // READ MSB X
         error = get_reg(LIS3DH_REG_OUT_X_H, &X_MSB);
         error_check(error);
         
-        //READ LSB Y
+        // READ LSB Y
         error = get_reg(LIS3DH_REG_OUT_Y_L, &Y_LSB);
         error_check(error);
         
-        //READ MSB Y
+        // READ MSB Y
         error = get_reg(LIS3DH_REG_OUT_Y_H, &Y_MSB);
         error_check(error);
         
-        //READ LSB Z
+        // READ LSB Z
         error = get_reg(LIS3DH_REG_OUT_Z_L, &Z_LSB);
         error_check(error);
         
-        //READ MSB Z
+        // READ MSB Z
         error = get_reg(LIS3DH_REG_OUT_Z_H, &Z_MSB);
         error_check(error);
         
-         //merge the two bytes
+        // Merge the two bytes
         X_data = (X_MSB<<8) | X_LSB;
         X_data = X_data >> 4;       
         Y_data = (Y_MSB<<8) | Y_LSB;
@@ -131,7 +131,7 @@ void FIFO_read()
         
     }
     
-    //Enter bypass mode to reset FIFO content
+    // Enter bypass mode to reset FIFO content
     error = FIFO_set(1, BYPASS_MODE);
     error = FIFO_set(1, FIFO_MODE);
     flag = 1;

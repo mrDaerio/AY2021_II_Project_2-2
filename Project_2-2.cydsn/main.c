@@ -20,9 +20,21 @@
 #define LED_ON 99
 #define LED_BLINK 50
 
+#define HEAD 0xA0
+#define TAIL 0xC0
+
+#define BUFFER_SIZE 8
+
+#define XH 1
+#define XL 2
+#define YH 3
+#define YL 4
+#define ZH 5
+#define ZL 6
+
 uint8_t flag = 0;
 int16_t x_buffer[FIFO_SIZE], y_buffer[FIFO_SIZE], z_buffer[FIFO_SIZE];
-uint8_t buffer[8];
+uint8_t buffer[BUFFER_SIZE];
 
 int main(void)
 {
@@ -52,16 +64,16 @@ int main(void)
     sprintf(message, "STATUS REG: %d\n", status_reg);
     UART_DEBUG_PutString(message);
     
-    //Accelerometer powered down
+    // Accelerometer powered down
     error = set_datarate(LIS3DH_DATARATE_POWERDOWN);
     error_check(error);
     
-    //enables FIFO
+    // Enables FIFO
     error = FIFO_set(1, FIFO_MODE);
     error_check(error);
 
-    buffer[0] = 0xA0;
-    buffer[7] = 0xC0;
+    buffer[0] = HEAD;
+    buffer[7] = TAIL;
     
     if (!I2C_Peripheral_IsDeviceConnected(LIS3DH_DEVICE_ADDRESS))
         PWM_LED_WriteCompare(LED_BLINK);
@@ -72,18 +84,20 @@ int main(void)
     {      
         if(flag){
             flag = 0;
-            for(int i=0;i<FIFO_SIZE;i++){
-                buffer[1] = x_buffer[i] >> 8;
-                buffer[2] = x_buffer[i];
-                buffer[3] = y_buffer[i] >> 8;
-                buffer[4] = y_buffer[i];
-                buffer[5] = z_buffer[i] >> 8;
-                buffer[6] = z_buffer[i];
-                //UART_DEBUG_PutArray(buffer, 8);
-                UART_BT_PutArray(buffer, 8);
+            for(int i=0; i<FIFO_SIZE; i++){
+                
+                buffer[1] = x_buffer[XH] >> 8;
+                buffer[2] = x_buffer[XL];
+                buffer[3] = y_buffer[YH] >> 8;
+                buffer[4] = y_buffer[YL];
+                buffer[5] = z_buffer[ZH] >> 8;
+                buffer[6] = z_buffer[ZL];
+                
+                // UART_DEBUG_PutArray(buffer, 8);
+                UART_BT_PutArray(buffer, BUFFER_SIZE);
 
             }
-            UART_BT_PutString("\n");
+            // UART_BT_PutString("\n");
         }
         
     }
