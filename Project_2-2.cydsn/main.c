@@ -23,7 +23,7 @@
 #define HEAD 0xA0
 #define TAIL 0xC0
 
-#define BUFFER_SIZE 8
+#define BUFFER_SIZE 194
 
 #define XH 1
 #define XL 2
@@ -73,7 +73,7 @@ int main(void)
     error_check(error);
 
     buffer[0] = HEAD;
-    buffer[7] = TAIL;
+    buffer[193] = TAIL;
     
     if (!I2C_Peripheral_IsDeviceConnected(LIS3DH_DEVICE_ADDRESS))
         PWM_LED_WriteCompare(LED_BLINK);
@@ -84,20 +84,17 @@ int main(void)
     {      
         if(flag){
             flag = 0;
-            for(int i=0; i<FIFO_SIZE; i++){
-                
-                buffer[XH] = x_buffer[i] >> 8;
-                buffer[XL] = x_buffer[i];
-                buffer[YH] = y_buffer[i] >> 8;
-                buffer[YL] = y_buffer[i];
-                buffer[ZH] = z_buffer[i] >> 8;
-                buffer[ZL] = z_buffer[i];
-                
-                UART_DEBUG_PutArray(buffer, 8);
-                UART_BT_PutArray(buffer, BUFFER_SIZE);
-
+            for(int i=1; i <= FIFO_SIZE; i++) {
+                    buffer[2*i - 1] = x_buffer[i-1] >> 8;
+                    buffer[2*i] = x_buffer[i-1];
+                    buffer[2*i + 2*FIFO_SIZE - 1] = y_buffer[i-1] >> 8;
+                    buffer[2*i + 2*FIFO_SIZE] = y_buffer[i-1];
+                    buffer[2*(i + 2*FIFO_SIZE) - 1] = z_buffer[i-1] >> 8;
+                    buffer[2*(i + 2*FIFO_SIZE)] = z_buffer[i-1];
             }
-        }       
+            UART_BT_PutArray(buffer, BUFFER_SIZE);
+            UART_DEBUG_PutArray(buffer, BUFFER_SIZE);
+        }    
     }
 }
 
