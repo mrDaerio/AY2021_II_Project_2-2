@@ -278,9 +278,9 @@ class KivySerial(EventDispatcher, metaclass=Singleton):
     #   State machine to parse incoming data packet into a \ref LIS3DHDataPacket
     #   The structure of the incoming packet is as follows:
     #       - Header byte: 0xA0
-    #       - X Axis data: 2 bytes
-    #       - Y Axis data: 2 bytes
-    #       - Z Axis data: 2 bytes
+    #       - X Axis data: 64 bytes
+    #       - Y Axis data: 64 bytes
+    #       - Z Axis data: 64 bytes
     #       - Tail byte: 0xC0
     #
     #   @param[in]      max_bytes_to_skip: optional number of bytes to skip when looking for header byte
@@ -301,13 +301,13 @@ class KivySerial(EventDispatcher, metaclass=Singleton):
                         rep = 0
                         self.read_state = 1
             elif (self.read_state == 1):
-                # Get six bytes of acceleration data
-                data = self.port.read(6)
-                if (len(data) == 6):
-                    data = struct.unpack('6B', data)
-                    x_data = self.convert_acc_data(data[0:2])
-                    y_data = self.convert_acc_data(data[2:4])
-                    z_data = self.convert_acc_data(data[4:])
+                # Get six bytes*32 of acceleration data
+                data = self.port.read(6*32)
+                if (len(data) == 6*32):
+                    data = struct.unpack('192B', data)
+                    x_data = self.convert_acc_data(data[0:64])
+                    y_data = self.convert_acc_data(data[64:128])
+                    z_data = self.convert_acc_data(data[128:192])
                     self.read_state = 2
                 else:
                     self.read_state = 0
@@ -336,17 +336,20 @@ class KivySerial(EventDispatcher, metaclass=Singleton):
     #
     def convert_acc_data(self, data):
         try:
-            temp_data = data[0] << 8 | data[1]
-        except:
+            temp_data = [0 for i in range(len(data)//2)]
+            for i in range(len(data)//2):
+                temp_data[i] = data[i*2] << 8 | data[2*i+1]
+                if temp_data[i] & 0x8000:
+                    # We have a negative number
+                    temp_data[i] = 0xFFFF - temp_data[i]
+                    temp_data[i] = temp_data[i] + 1
+                    temp_data[i] = - temp_data[i]
+        except Exception as e:
+            print("errore", e)
             return data
-        if (temp_data & 0x8000):
-            # We have a negative number
-            temp_data = 0xFFFF - temp_data
-            temp_data = temp_data + 1
-            temp_data = - temp_data
         # temp_data = temp_data >> 6  # 6-byte shift since we are in normal mode
         # temp_data = temp_data * 4   # Sensitivity of 4 mg/digit in normal mode, +/-2g
-        return temp_data / 1000.
+        return [i/1000 for i in temp_data]
 
     ##
     #   @brief          Stop data streaming.

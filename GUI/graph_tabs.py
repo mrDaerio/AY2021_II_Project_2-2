@@ -212,26 +212,25 @@ class LIS3DHTabbedPanelItem(TabbedPanelItem):
     #
     #   @param[in]      packet: new packet received.
     def update_plot(self, packet):
-        self.x_axis_n_points_collected.append(packet.get_x_data())
-        self.y_axis_n_points_collected.append(packet.get_y_data())
-        self.z_axis_n_points_collected.append(packet.get_z_data())
-        if (len(self.x_axis_n_points_collected) == self.n_points_per_update):
-            for idx in range(self.n_points_per_update):
-                self.x_axis_points.append(self.x_axis_points.pop(0))
-                self.x_axis_points[-1] = self.x_axis_n_points_collected[idx]
-                self.y_axis_points.append(self.y_axis_points.pop(0))
-                self.y_axis_points[-1] = self.y_axis_n_points_collected[idx]
-                self.z_axis_points.append(self.z_axis_points.pop(0))
-                self.z_axis_points[-1] = self.z_axis_n_points_collected[idx]
-            self.x_plot.points = zip(self.x_points, self.x_axis_points)
-            self.y_plot.points = zip(self.x_points, self.y_axis_points)
-            self.z_plot.points = zip(self.x_points, self.z_axis_points)
-            self.x_axis_n_points_collected = []
-            self.y_axis_n_points_collected = []
-            self.z_axis_n_points_collected = []
+        self.x_axis_n_points_collected = packet.get_x_data()
+        self.y_axis_n_points_collected = packet.get_y_data()
+        self.z_axis_n_points_collected = packet.get_z_data()
+        for idx in range(len(self.x_axis_n_points_collected)):
+            self.x_axis_points.append(self.x_axis_points.pop(0))
+            self.x_axis_points[-1] = self.x_axis_n_points_collected[idx]
+            self.y_axis_points.append(self.y_axis_points.pop(0))
+            self.y_axis_points[-1] = self.y_axis_n_points_collected[idx]
+            self.z_axis_points.append(self.z_axis_points.pop(0))
+            self.z_axis_points[-1] = self.z_axis_n_points_collected[idx]
+        self.x_plot.points = zip(self.x_points, self.x_axis_points)
+        self.y_plot.points = zip(self.x_points, self.y_axis_points)
+        self.z_plot.points = zip(self.x_points, self.z_axis_points)
+        self.x_axis_n_points_collected = []
+        self.y_axis_n_points_collected = []
+        self.z_axis_n_points_collected = []
 
-            if (self.autoscale):
-                self.autoscale_plots()
+        if (self.autoscale):
+            self.autoscale_plots()
 
     ##
     #   @brief          Update plots based on new sample rate value.
