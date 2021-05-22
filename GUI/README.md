@@ -7,3 +7,4 @@ This is a GUI showing how to read, parse, and plot acceleration data from a LIS3
     - garden install graph
 - PySerial
 - SciPy
+- numpy

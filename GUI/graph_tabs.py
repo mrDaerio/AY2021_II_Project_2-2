@@ -213,20 +213,26 @@ class LIS3DHTabbedPanelItem(TabbedPanelItem):
     #   @param[in]      packet: new packet received.
     def update_plot(self, packet, s):
         self.x_axis_n_points_collected = packet.get_x_data()
-        self.y_axis_n_points_collected = s.get_filtered_data()
+
+        if (s.flag_first_filter):
+            self.y_axis_n_points_collected = s.get_filtered_data()
+        
         self.z_axis_n_points_collected = packet.get_z_data()
         for idx in range(len(self.x_axis_n_points_collected)):
             self.x_axis_points.append(self.x_axis_points.pop(0))
             self.x_axis_points[-1] = self.x_axis_n_points_collected[idx]
-            self.y_axis_points.append(self.y_axis_points.pop(0))
-            self.y_axis_points[-1] = self.y_axis_n_points_collected[idx]
+            if (s.flag_first_filter):
+                self.y_axis_points.append(self.y_axis_points.pop(0))
+                self.y_axis_points[-1] = self.y_axis_n_points_collected[idx]
             self.z_axis_points.append(self.z_axis_points.pop(0))
             self.z_axis_points[-1] = self.z_axis_n_points_collected[idx]
         self.x_plot.points = zip(self.x_points, self.x_axis_points)
-        self.y_plot.points = zip(self.x_points, self.y_axis_points)
+        if (s.flag_first_filter):
+            self.y_plot.points = zip(self.x_points, self.y_axis_points)
         self.z_plot.points = zip(self.x_points, self.z_axis_points)
         self.x_axis_n_points_collected = []
-        self.y_axis_n_points_collected = []
+        if (s.flag_first_filter):
+            self.y_axis_n_points_collected = []
         self.z_axis_n_points_collected = []
 
         if (self.autoscale):

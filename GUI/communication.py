@@ -8,7 +8,8 @@ import serial.tools.list_ports as list_ports
 import struct
 import threading
 import time
-from scipy.signal import butter, lfilter
+from scipy.signal import butter, lfilter, hilbert
+import numpy as np
 
 ##
 #   @brief          Data packet header.
@@ -459,7 +460,9 @@ class Signal():
         self.z_data = []
         self.window_start_pos = 0
         self.stride = 32
+        self.window_length = 2000
         self.filtered_sum = []
+        self.flag_first_filter = False
 
     ##
     #   @brief          Get x axis acceleration.
@@ -480,14 +483,25 @@ class Signal():
         self.x_data += x
         self.y_data += y
         self.z_data += z
-        self.filter(x, y, z)
+        if (len(self.x_data)>=self.window_length):
+            self.filter()
+            self.flag_first_filter = True
 
-    def filter(self, x, y, z):
+    def filter(self):
+        #calculate filter coefficients
         nyq = 0.5 * 200
         low = 20 / nyq
         high = 35 / nyq
         b, a = butter(4, [low, high], btype='band')
-        self.filtered_sum = lfilter(b, a, [i+j for i, j in zip(z, x)])
+        x_windowed = self.x_data[self.window_start_pos:self.window_start_pos+self.window_length]
+        z_windowed =self.z_data[self.window_start_pos:self.window_start_pos+self.window_length]
+        self.filtered_sum = lfilter(b, a, [i+j for i, j in zip(x_windowed, z_windowed)])
+        self.window_start_pos +=self.stride
+
+        self.filtered_sum = np.abs(hilbert(self.filtered_sum))
+
+        #if(self.flag_first_filter):
+        self.filtered_sum = self.filtered_sum[-32:]
 
     def get_filtered_data(self):
         return self.filtered_sum[-32:]
