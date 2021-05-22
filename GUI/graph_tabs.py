@@ -22,8 +22,8 @@ class GraphTabs(TabbedPanel):
     ##
     #   @brief          Update plots with new packet of data
     #   @param[in]      packet: new packet of data.
-    def update_plot(self, packet):
-        self.acc_tab.update_plot(packet)
+    def update_plot(self, packet, s):
+        self.acc_tab.update_plot(packet, s)
 
     ##
     #   @brief          Update sample rate value in plots.
@@ -211,9 +211,9 @@ class LIS3DHTabbedPanelItem(TabbedPanelItem):
     #   @brief          Update plot with new packet.
     #
     #   @param[in]      packet: new packet received.
-    def update_plot(self, packet):
+    def update_plot(self, packet, s):
         self.x_axis_n_points_collected = packet.get_x_data()
-        self.y_axis_n_points_collected = packet.get_y_data()
+        self.y_axis_n_points_collected = s.get_filtered_data()
         self.z_axis_n_points_collected = packet.get_z_data()
         for idx in range(len(self.x_axis_n_points_collected)):
             self.x_axis_points.append(self.x_axis_points.pop(0))

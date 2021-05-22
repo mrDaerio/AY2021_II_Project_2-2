@@ -6,3 +6,4 @@ This is a GUI showing how to read, parse, and plot acceleration data from a LIS3
 - Kivy-Garden graph. To install it, run this command inside your virtual environment:
     - garden install graph
 - PySerial
+- SciPy
