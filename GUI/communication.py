@@ -8,7 +8,7 @@ import serial.tools.list_ports as list_ports
 import struct
 import threading
 import time
-from scipy.signal import butter, lfilter, hilbert
+from scipy.signal import butter, lfilter, hilbert, find_peaks
 import numpy as np
 
 ##
@@ -460,9 +460,12 @@ class Signal():
         self.z_data = []
         self.window_start_pos = 0
         self.stride = 32
-        self.window_length = 2000
+        self.window_length = 2080
         self.filtered_sum = []
         self.flag_first_filter = False
+        self.diff = 0
+        self.peaks = 0
+        self.meanbpm = 0
 
     ##
     #   @brief          Get x axis acceleration.
@@ -491,17 +494,24 @@ class Signal():
         #calculate filter coefficients
         nyq = 0.5 * 200
         low = 20 / nyq
-        high = 35 / nyq
+        high = 50 / nyq
         b, a = butter(4, [low, high], btype='band')
         x_windowed = self.x_data[self.window_start_pos:self.window_start_pos+self.window_length]
         z_windowed =self.z_data[self.window_start_pos:self.window_start_pos+self.window_length]
-        self.filtered_sum = lfilter(b, a, [i+j for i, j in zip(x_windowed, z_windowed)])
-        self.window_start_pos +=self.stride
+        self.filtered_sum = lfilter(b, a, [abs(i) for i in z_windowed])
 
         self.filtered_sum = np.abs(hilbert(self.filtered_sum))
-
+        if self.window_start_pos % 640 == 0:
+            self.peaks = find_peaks(self.filtered_sum[-640:], distance=80, prominence=0.12)
+            self.peaks = self.peaks[0]
+            self.diff = [t - s for s, t in zip(self.peaks, self.peaks[1:])]
+            self.diff = [i/200 for i in self.diff]
+            self.meanbpm = 60/np.mean(self.diff)
+            print(self.meanbpm)
         #if(self.flag_first_filter):
-        self.filtered_sum = self.filtered_sum[-32:]
+        self.filtered_sum = self.filtered_sum[1000-16:1000+16]
+
+        self.window_start_pos += self.stride
 
     def get_filtered_data(self):
         return self.filtered_sum[-32:]
