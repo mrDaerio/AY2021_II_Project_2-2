@@ -4,11 +4,15 @@
 <GraphTabs>:
     do_default_tab: False
     acc_tab: _acc_tab
+    altro_tab: _altro_tab
     LIS3DHTabbedPanelItem:
+        text: 'Acceleration'
         id: _acc_tab
+    LIS3DHTabbedPanelItem:
+        text : 'Filtered data'
+        id: _altro_tab
 
 <LIS3DHTabbedPanelItem>:
-    text: 'Acceleration'
     graph: _graph
     plot_settings: _plot_settings
     BoxLayout:

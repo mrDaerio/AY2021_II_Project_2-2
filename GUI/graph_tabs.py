@@ -19,11 +19,14 @@ class GraphTabs(TabbedPanel):
     #   @brief          Reference to acceleration tabbed item.
     acc_tab = ObjectProperty(None)
 
+    altro_tab = ObjectProperty(None)
+
     ##
     #   @brief          Update plots with new packet of data
     #   @param[in]      packet: new packet of data.
     def update_plot(self, packet, s):
-        self.acc_tab.update_plot(packet, s)
+        #self.acc_tab.update_plot_raw(packet)
+        self.altro_tab.update_plot_filtered(s)
 
     ##
     #   @brief          Update sample rate value in plots.
@@ -31,7 +34,7 @@ class GraphTabs(TabbedPanel):
     #   @param[in]      value: new sample rate value
     def update_sample_rate(self, instance, value):
         self.acc_tab.update_sample_rate(value)
-
+        self.altro_tab.update_sample_rate(value)
 ##
 #   @brief          Tabbed panel item to show acceleration data.
 #
@@ -138,6 +141,9 @@ class LIS3DHTabbedPanelItem(TabbedPanelItem):
 
         y_min = min(global_y_min)
         y_max = max(global_y_max)
+
+        y_max = int(y_max * 100)/100 #correct error on autoscale for y_max format
+        
         if (y_min != y_max):
             min_val, max_val, major_ticks, minor_ticks = self.get_bounds_and_ticks(
                 y_min, y_max, 10)
@@ -211,29 +217,41 @@ class LIS3DHTabbedPanelItem(TabbedPanelItem):
     #   @brief          Update plot with new packet.
     #
     #   @param[in]      packet: new packet received.
-    def update_plot(self, packet, s):
+    def update_plot_raw(self, packet):
         self.x_axis_n_points_collected = packet.get_x_data()
-
-        if (s.flag_first_filter):
-            self.y_axis_n_points_collected = s.get_filtered_data()
-        
+        self.y_axis_n_points_collected = packet.get_y_data()
         self.z_axis_n_points_collected = packet.get_z_data()
+
         for idx in range(len(self.x_axis_n_points_collected)):
             self.x_axis_points.append(self.x_axis_points.pop(0))
             self.x_axis_points[-1] = self.x_axis_n_points_collected[idx]
-            if (s.flag_first_filter):
-                self.y_axis_points.append(self.y_axis_points.pop(0))
-                self.y_axis_points[-1] = self.y_axis_n_points_collected[idx]
+            self.y_axis_points.append(self.y_axis_points.pop(0))
+            self.y_axis_points[-1] = self.y_axis_n_points_collected[idx]
             self.z_axis_points.append(self.z_axis_points.pop(0))
             self.z_axis_points[-1] = self.z_axis_n_points_collected[idx]
         self.x_plot.points = zip(self.x_points, self.x_axis_points)
-        if (s.flag_first_filter):
-            self.y_plot.points = zip(self.x_points, self.y_axis_points)
+        self.y_plot.points = zip(self.x_points, self.y_axis_points)
         self.z_plot.points = zip(self.x_points, self.z_axis_points)
+
         self.x_axis_n_points_collected = []
-        if (s.flag_first_filter):
-            self.y_axis_n_points_collected = []
+        self.y_axis_n_points_collected = []
         self.z_axis_n_points_collected = []
+
+        if (self.autoscale):
+            self.autoscale_plots()
+
+    def update_plot_filtered(self, s):
+        if (s.flag_first_filter):
+            self.x_axis_n_points_collected, self.y_axis_n_points_collected = s.get_filtered_data()
+            for idx in range(len(self.x_axis_n_points_collected)):
+                self.x_axis_points.append(self.x_axis_points.pop(0))
+                self.x_axis_points[-1] = self.x_axis_n_points_collected[idx]
+                self.y_axis_points.append(self.y_axis_points.pop(0))
+                self.y_axis_points[-1] = self.y_axis_n_points_collected[idx]
+            self.x_plot.points = zip(self.x_points, self.x_axis_points)
+            self.y_plot.points = zip(self.x_points, self.y_axis_points)
+            self.x_axis_n_points_collected = []
+            self.y_axis_n_points_collected = []
 
         if (self.autoscale):
             self.autoscale_plots()
