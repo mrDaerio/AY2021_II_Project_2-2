@@ -20,16 +20,30 @@
 #define LED_ON 99
 #define LED_BLINK 50
 
+#define HEAD 0xA0
+#define TAIL 0xC0
+
+#define BUFFER_SIZE 194
+
+#define XH 1
+#define XL 2
+#define YH 3
+#define YL 4
+#define ZH 5
+#define ZL 6
+
 uint8_t flag = 0;
 int16_t x_buffer[FIFO_SIZE], y_buffer[FIFO_SIZE], z_buffer[FIFO_SIZE];
+uint8_t buffer[BUFFER_SIZE];
 
 int main(void)
 {
     CyGlobalIntEnable; /* Enable global interrupts. */
     I2C_Peripheral_Start();
     UART_DEBUG_Start();
+    UART_BT_Start();
     isr_FIFO_StartEx(Custom_ISR_FIFO);
-    
+    isr_BT_StartEx(Custom_ISR_RXBT);
     PWM_LED_Start();
     
     char message[50] = {'\0'};
@@ -45,42 +59,42 @@ int main(void)
     
     /*      I2C Master Read - STATUS Register       */
     uint8_t status_reg;
-    error = get_reg(LIS3DH_REG_STATUS1, &status_reg);
+    error = get_reg(LIS3DH_REG_STATUS2, &status_reg);
     error_check(error);
     sprintf(message, "STATUS REG: %d\n", status_reg);
     UART_DEBUG_PutString(message);
     
-    // Enable accelerometer
-    error = set_datarate(LIS3DH_DATARATE_400_HZ);
+    // Accelerometer powered down
+    error = set_datarate(LIS3DH_DATARATE_POWERDOWN);
     error_check(error);
     
-    //enables FIFO
+    // Enables FIFO
     error = FIFO_set(1, FIFO_MODE);
     error_check(error);
+
+    buffer[0] = HEAD;
+    buffer[193] = TAIL;
     
+    if (!I2C_Peripheral_IsDeviceConnected(LIS3DH_DEVICE_ADDRESS))
+        PWM_LED_WriteCompare(LED_BLINK);
+    else
+        PWM_LED_WriteCompare(LED_ON);
+
     for(;;)
-    {
-        CyDelay(10);
-        if (!I2C_Peripheral_IsDeviceConnected(LIS3DH_DEVICE_ADDRESS))
-                PWM_LED_WriteCompare(LED_BLINK);
-        else
-            PWM_LED_WriteCompare(LED_ON);
-        
+    {      
         if(flag){
             flag = 0;
-            for(int i=0;i<FIFO_SIZE;i++){
-        sprintf(message, "X-data: %d", x_buffer[i]);
-        UART_DEBUG_PutString(message);
-        
-        sprintf(message, "  Y-data: %d", y_buffer[i]);
-        UART_DEBUG_PutString(message);
-        
-        sprintf(message, "  Z-data: %d\n", z_buffer[i]);
-        UART_DEBUG_PutString(message);
+            for(int i=1; i <= FIFO_SIZE; i++) {
+                    buffer[2*i - 1] = x_buffer[i-1] >> 8;
+                    buffer[2*i] = x_buffer[i-1];
+                    buffer[2*i + 2*FIFO_SIZE - 1] = y_buffer[i-1] >> 8;
+                    buffer[2*i + 2*FIFO_SIZE] = y_buffer[i-1];
+                    buffer[2*(i + 2*FIFO_SIZE) - 1] = z_buffer[i-1] >> 8;
+                    buffer[2*(i + 2*FIFO_SIZE)] = z_buffer[i-1];
             }
-            UART_DEBUG_PutString("\n");
-        }
-        
+            UART_BT_PutArray(buffer, BUFFER_SIZE);
+            UART_DEBUG_PutArray(buffer, BUFFER_SIZE);
+        }    
     }
 }
 

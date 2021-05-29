@@ -107,6 +107,7 @@
      */
     
     #define LIS3DH_REG_CTRL1_DATA_RATE_BITS_MASK 0b11110000
+    #define LIS3DH_REG_CTRL1_RANGE_BITS_MASK 0b00110000
     #define LIS3DH_REG_CTRL5_FIFO_SET_BITS_MASK 0b01000000
     #define LIS3DH_REG_FIFOCTRL_FIFO_MODE_BITS_MASK 0b11000000
     #define LIS3DH_REG_CTRL3_FIFO_INT1_BITS_MASK 0b00000010
@@ -361,7 +362,7 @@
       LIS3DH_DATARATE_1_HZ = 0b0001,   //    1Hz
       LIS3DH_DATARATE_POWERDOWN = 0,
       LIS3DH_DATARATE_LOWPOWER_1K6HZ = 0b1000,
-      LIS3DH_DATARATE_LOWPOWER_5KHZ = 0b1001,
+      LIS3DH_DATARATE_1344Hz = 0b1001,
     } lis3dh_dataRate_t;
     
     typedef enum {
@@ -375,6 +376,7 @@
     ErrorCode get_reg (uint8_t reg, uint8_t* value_reg);
     ErrorCode set_reg_masked_only (uint8_t reg, uint8_t mask, uint8_t value_reg);
     ErrorCode set_datarate (lis3dh_dataRate_t val);
+    ErrorCode set_range (lis3dh_range_t val);
     ErrorCode FIFO_set(uint8_t val, lis3dh_fifo_mode_t mode);
     void FIFO_read (void);
 

@@ -22,5 +22,7 @@ Export/
 *.svd
 *.log
 .*DS_Store
+*__pycache__
+*.idea
 
 # End of https://www.gitignore.io/api/psoccreator

@@ -16,9 +16,10 @@
 #include "project.h"
 
 void error_check (ErrorCode error)
-{   
+{   if(error != 0) PWM_LED_WriteCompare(50);
     switch(error){
     case NO_ERROR:    ///< No error generated
+       PWM_LED_WriteCompare(99); 
        break;
     case I2C_READ_REGISTER_ERROR:
         UART_DEBUG_PutString("\nError in reading I2C register");
@@ -34,6 +35,9 @@ void error_check (ErrorCode error)
         break;
     case DATARATE_SET_FAIL:
         UART_DEBUG_PutString("\nError in setting data rate, check set_datarate function");
+        break;
+    case FSR_SET_FAIL:
+        UART_DEBUG_PutString("\nError in setting fsr, check set_fsr function");
         break;
     case FIFO_SET_FAIL:
         UART_DEBUG_PutString("\nError in setting FIFO, check FIFO_set function");   

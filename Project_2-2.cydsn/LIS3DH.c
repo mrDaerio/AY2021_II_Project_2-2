@@ -14,9 +14,10 @@
 #include "project.h"
 #include "stdio.h"
 
-extern uint16_t x_buffer[FIFO_SIZE], y_buffer[FIFO_SIZE], z_buffer[FIFO_SIZE];
+extern int16_t x_buffer[FIFO_SIZE], y_buffer[FIFO_SIZE], z_buffer[FIFO_SIZE];
 extern uint8_t flag;
 
+// Function to set a general register of the LIS3DH with value
 ErrorCode set_reg (uint8_t reg, uint8_t value_reg)
 {
     ErrorCode error = I2C_Peripheral_WriteRegister(LIS3DH_DEVICE_ADDRESS, 
@@ -25,6 +26,7 @@ ErrorCode set_reg (uint8_t reg, uint8_t value_reg)
     return error;
 }
 
+// Function to read a general register of the LIS3DH 
 ErrorCode get_reg (uint8_t reg, uint8_t* value_reg)
 {
     ErrorCode error = I2C_Peripheral_ReadRegister(LIS3DH_DEVICE_ADDRESS, 
@@ -33,6 +35,7 @@ ErrorCode get_reg (uint8_t reg, uint8_t* value_reg)
     return error;
 }
 
+// Function to set only specific bits of a general register with a mask
 ErrorCode set_reg_masked_only (uint8_t reg, uint8_t mask, uint8_t value_reg)
 {
     //read register
@@ -54,6 +57,7 @@ ErrorCode set_reg_masked_only (uint8_t reg, uint8_t mask, uint8_t value_reg)
     return err;
 }
 
+// Function to set the datarate of the LIS3DH
 ErrorCode set_datarate (lis3dh_dataRate_t val)
 {
     ErrorCode err = set_reg_masked_only(LIS3DH_REG_CTRL1,
@@ -62,6 +66,16 @@ ErrorCode set_datarate (lis3dh_dataRate_t val)
     return err ? DATARATE_SET_FAIL : NO_ERROR;
 }
 
+// Function to set the full scale range of the LIS3DH
+ErrorCode set_range (lis3dh_range_t val)
+{
+    ErrorCode err = set_reg_masked_only(LIS3DH_REG_CTRL4,
+                                        LIS3DH_REG_CTRL1_RANGE_BITS_MASK,
+                                        val<<4);
+    return err ? FSR_SET_FAIL : NO_ERROR;
+}
+
+// Function to activate and set the FIFO
 ErrorCode FIFO_set(uint8_t val, lis3dh_fifo_mode_t mode)
 {
     //Enables or disables FIFO
@@ -86,38 +100,38 @@ ErrorCode FIFO_set(uint8_t val, lis3dh_fifo_mode_t mode)
 
 }
 
+// Function to read the samples in the FIFO
 void FIFO_read()
 {
     ErrorCode error;
     int16_t X_data, Y_data, Z_data;
     uint8_t X_LSB, X_MSB, Y_LSB, Y_MSB, Z_LSB, Z_MSB;
-    
     for(int i = 0; i<FIFO_SIZE; i++){
-        //READ LSB X
+        // READ LSB X
         error = get_reg(LIS3DH_REG_OUT_X_L, &X_LSB);
         error_check(error);
         
-        //READ MSB X
+        // READ MSB X
         error = get_reg(LIS3DH_REG_OUT_X_H, &X_MSB);
         error_check(error);
         
-        //READ LSB Y
+        // READ LSB Y
         error = get_reg(LIS3DH_REG_OUT_Y_L, &Y_LSB);
         error_check(error);
         
-        //READ MSB Y
+        // READ MSB Y
         error = get_reg(LIS3DH_REG_OUT_Y_H, &Y_MSB);
         error_check(error);
         
-        //READ LSB Z
+        // READ LSB Z
         error = get_reg(LIS3DH_REG_OUT_Z_L, &Z_LSB);
         error_check(error);
         
-        //READ MSB Z
+        // READ MSB Z
         error = get_reg(LIS3DH_REG_OUT_Z_H, &Z_MSB);
         error_check(error);
         
-         //merge the two bytes
+        // Merge the two bytes
         X_data = (X_MSB<<8) | X_LSB;
         X_data = X_data >> 4;       
         Y_data = (Y_MSB<<8) | Y_LSB;
@@ -129,9 +143,10 @@ void FIFO_read()
         y_buffer[i] = Y_data;
         z_buffer[i] = Z_data;
         
+        
     }
     
-    //Enter bypass mode to reset FIFO content
+    // Enter bypass mode to reset FIFO content
     error = FIFO_set(1, BYPASS_MODE);
     error = FIFO_set(1, FIFO_MODE);
     flag = 1;
