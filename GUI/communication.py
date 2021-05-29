@@ -224,7 +224,7 @@ class KivySerial(EventDispatcher, metaclass=Singleton):
             return -1
         if (self.port.is_open):
             self.message_string = f'Device connected at {self.port_name}'
-            self.update_sample_rate_on_board('1 Hz')
+            self.update_sample_rate_on_board('200 Hz')
             self.connected = CONNECTION_STATE_CONNECTED
             return 0
         return -1
@@ -378,10 +378,6 @@ class KivySerial(EventDispatcher, metaclass=Singleton):
     #   @param[in]      value: the desired sample rate to be set.
     def update_sample_rate_on_board(self, value):
         sample_rate_dict = {
-            '1 Hz': '0',
-            '10 Hz': '1',
-            '25 Hz': '2',
-            '50 Hz': '3',
             '100 Hz': '4',
             '200 Hz': '5',
             '400 Hz': '6',
@@ -533,7 +529,7 @@ class Signal():
 
 
         self.meanbpm = 60/np.mean(self.diff)
-        print(self.meanbpm)
+        #print(self.meanbpm)
 
         #if(self.flag_first_filter):
         self.filtered_sum = self.filtered_sum[1000-16:1000+16]
@@ -542,6 +538,6 @@ class Signal():
 
     def get_filtered_data(self):
         logic_peak = [1 if i in self.peaks else 0 for i in range(640)]
-        print(self.peaks)
+        #print(self.peaks)
         return logic_peak[-32:]
         #return self.filtered_sum[-32:]
