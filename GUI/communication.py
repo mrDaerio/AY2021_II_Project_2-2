@@ -2,7 +2,8 @@
 # @package communication
 from datetime import datetime
 from kivy.event import EventDispatcher
-from kivy.properties import NumericProperty, StringProperty  # pylint: disable=no-name-in-module
+from kivy.properties import NumericProperty, StringProperty
+from numpy import matrixlib  # pylint: disable=no-name-in-module
 import serial
 import serial.tools.list_ports as list_ports
 import struct
@@ -10,6 +11,8 @@ import threading
 import time
 from scipy.signal import butter, lfilter, hilbert, find_peaks
 import numpy as np
+from sklearn.decomposition import PCA
+import pandas as pd
 
 ##
 #   @brief          Data packet header.
@@ -272,7 +275,8 @@ class KivySerial(EventDispatcher, metaclass=Singleton):
             diff = (datetime.now() - self.initial_time).total_seconds()
             if (diff != 0):
                 self.current_sample_rate = (self.samples_counter + 1) / diff
-                self.message_string = f'Samples: {self.samples_counter:6d} | Sample Rate: {self.current_sample_rate:5.2f} Hz'
+                bpm_to_print = int(self.signal.meanbpm) if self.signal.meanbpm == self.signal.meanbpm else 0 
+                self.message_string = f'Heart rate: {bpm_to_print:3d} | Sample Rate: {self.current_sample_rate:5.2f} Hz'
         self.samples_counter += 32
 
     ##
@@ -497,12 +501,30 @@ class Signal():
         high = 50 / nyq
         b, a = butter(4, [low, high], btype='band')
         x_windowed = self.x_data[self.window_start_pos:self.window_start_pos+self.window_length]
+        y_windowed = self.y_data[self.window_start_pos:self.window_start_pos+self.window_length]
         z_windowed =self.z_data[self.window_start_pos:self.window_start_pos+self.window_length]
-        self.filtered_sum = lfilter(b, a, [abs(i) for i in z_windowed])
+
+        """
+            PCA
+        """
+        pca = PCA(n_components = 1)
+        #create dataframe
+        matrix = pd.DataFrame({'x' : x_windowed,
+                               'y' : y_windowed,
+                               'z' : z_windowed})
+        #remove mean
+        matrix = matrix-matrix.mean()
+        #print(matrix)
+        #find principal component
+        principal_component = pca.fit_transform(matrix)
+        principal_component = [i[0] for i in principal_component]
+        #print(principal_component)
+
+        self.filtered_sum = lfilter(b, a, principal_component)
 
         self.filtered_sum = np.abs(hilbert(self.filtered_sum))
         #if self.window_start_pos % 640 == 0:
-        self.peaks = find_peaks(self.filtered_sum[-640:], distance=80, prominence=0.02)
+        self.peaks = find_peaks(self.filtered_sum[-640:], distance=80, prominence=0.015)
         self.peaks = self.peaks[0]
         self.diff = [t - s for s, t in zip(self.peaks, self.peaks[1:])]
         
@@ -512,6 +534,7 @@ class Signal():
 
         self.meanbpm = 60/np.mean(self.diff)
         print(self.meanbpm)
+
         #if(self.flag_first_filter):
         self.filtered_sum = self.filtered_sum[1000-16:1000+16]
 
@@ -520,5 +543,5 @@ class Signal():
     def get_filtered_data(self):
         logic_peak = [1 if i in self.peaks else 0 for i in range(640)]
         print(self.peaks)
-        return logic_peak
+        return logic_peak[-32:]
         #return self.filtered_sum[-32:]

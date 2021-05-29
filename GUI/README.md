@@ -8,3 +8,5 @@ This is a GUI showing how to read, parse, and plot acceleration data from a LIS3
 - PySerial
 - SciPy
 - numpy
+- scikit-learn
+- pandas
