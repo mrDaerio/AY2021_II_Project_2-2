@@ -50,8 +50,8 @@ uint8_t Full_Scale_Read(){
     else {
         // uint8_t error = EEPROM_UpdateTemperature();
         EEPROM_WriteByte(FULL_SCALE_HEAD, FULL_SCALE_ADDRESS-1);
-        EEPROM_WriteByte(SAMPLE_RATE, FULL_SCALE_ADDRESS);
-        EEPROM_WriteByte(SAMPLE_RATE_TAIL, FULL_SCALE_ADDRESS+1);
+        EEPROM_WriteByte(FULL_SCALE, FULL_SCALE_ADDRESS);
+        EEPROM_WriteByte(FULL_SCALE_TAIL, FULL_SCALE_ADDRESS+1);
         fsc = EEPROM_ReadByte(FULL_SCALE_ADDRESS);  
     } 
     
