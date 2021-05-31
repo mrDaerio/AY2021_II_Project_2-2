@@ -17,6 +17,7 @@
 #include "ErrorCodes.h"
 #include "InterruptRoutines.h"
 
+
 #define LED_ON 99
 #define LED_BLINK 50
 
@@ -50,6 +51,13 @@ int main(void)
     
     CyDelay(5); //"The boot procedure is complete about 5 ms after device power-up."
     
+    if (!I2C_Peripheral_IsDeviceConnected(LIS3DH_DEVICE_ADDRESS))
+        PWM_LED_WriteCompare(LED_BLINK);
+    else
+        PWM_LED_WriteCompare(LED_ON);
+        
+    CyDelay(10);
+    
     /*      I2C Master Read - WHOAMI Register       */
     uint8_t whoami_reg;
     ErrorCode error = get_reg(LIS3DH_REG_WHOAMI, &whoami_reg);
@@ -75,10 +83,7 @@ int main(void)
     buffer[0] = HEAD;
     buffer[193] = TAIL;
     
-    if (!I2C_Peripheral_IsDeviceConnected(LIS3DH_DEVICE_ADDRESS))
-        PWM_LED_WriteCompare(LED_BLINK);
-    else
-        PWM_LED_WriteCompare(LED_ON);
+    
 
     for(;;)
     {      
@@ -93,7 +98,7 @@ int main(void)
                     buffer[2*(i + 2*FIFO_SIZE)] = z_buffer[i-1];
             }
             UART_BT_PutArray(buffer, BUFFER_SIZE);
-            UART_DEBUG_PutArray(buffer, BUFFER_SIZE);
+            // UART_DEBUG_PutArray(buffer, BUFFER_SIZE);
         }    
     }
 }
