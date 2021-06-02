@@ -26,13 +26,6 @@
 
 #define BUFFER_SIZE 194
 
-#define XH 1
-#define XL 2
-#define YH 3
-#define YL 4
-#define ZH 5
-#define ZL 6
-
 uint8_t flag = 0;
 int16_t x_buffer[FIFO_SIZE], y_buffer[FIFO_SIZE], z_buffer[FIFO_SIZE];
 uint8_t buffer[BUFFER_SIZE];
@@ -81,8 +74,7 @@ int main(void)
     error_check(error);
 
     buffer[0] = HEAD;
-    buffer[193] = TAIL;
-    
+    buffer[BUFFER_SIZE-1] = TAIL;
     
 
     for(;;)

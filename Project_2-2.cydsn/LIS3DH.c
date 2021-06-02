@@ -17,6 +17,13 @@
 extern int16_t x_buffer[FIFO_SIZE], y_buffer[FIFO_SIZE], z_buffer[FIFO_SIZE];
 extern uint8_t flag;
 
+#define XL 0
+#define XH 1
+#define YL 2
+#define YH 3
+#define ZL 4
+#define ZH 5
+
 // Function to set a general register of the LIS3DH with value
 ErrorCode set_reg (uint8_t reg, uint8_t value_reg)
 {
@@ -105,38 +112,20 @@ void FIFO_read()
 {
     ErrorCode error;
     int16_t X_data, Y_data, Z_data;
-    uint8_t X_LSB, X_MSB, Y_LSB, Y_MSB, Z_LSB, Z_MSB;
+    uint8_t fifo[6];
+    
     for(int i = 0; i<FIFO_SIZE; i++){
-        // READ LSB X
-        error = get_reg(LIS3DH_REG_OUT_X_L, &X_LSB);
+        error = I2C_Peripheral_ReadRegisterMulti(LIS3DH_DEVICE_ADDRESS,
+                                        LIS3DH_REG_OUT_X_L,
+                                        6,  //2 bytes for every coordinate
+                                        fifo);
         error_check(error);
-        
-        // READ MSB X
-        error = get_reg(LIS3DH_REG_OUT_X_H, &X_MSB);
-        error_check(error);
-        
-        // READ LSB Y
-        error = get_reg(LIS3DH_REG_OUT_Y_L, &Y_LSB);
-        error_check(error);
-        
-        // READ MSB Y
-        error = get_reg(LIS3DH_REG_OUT_Y_H, &Y_MSB);
-        error_check(error);
-        
-        // READ LSB Z
-        error = get_reg(LIS3DH_REG_OUT_Z_L, &Z_LSB);
-        error_check(error);
-        
-        // READ MSB Z
-        error = get_reg(LIS3DH_REG_OUT_Z_H, &Z_MSB);
-        error_check(error);
-        
         // Merge the two bytes
-        X_data = (X_MSB<<8) | X_LSB;
-        X_data = X_data >> 4;       
-        Y_data = (Y_MSB<<8) | Y_LSB;
+        X_data = (fifo[XH]<<8) | fifo[XL];
+        X_data = X_data >> 4;   //We're reading a 10bit datum, left adjusted    
+        Y_data = (fifo[YH]<<8) | fifo[YL];
         Y_data = Y_data >> 4;        
-        Z_data = (Z_MSB<<8) | Z_LSB;
+        Z_data = (fifo[ZH]<<8) | fifo[ZL];
         Z_data = Z_data >> 4;
         
         x_buffer[i] = X_data;
