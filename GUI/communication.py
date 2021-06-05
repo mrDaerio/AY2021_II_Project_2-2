@@ -524,24 +524,22 @@ class Signal():
         self.filtered_sum = lfilter(b,a,self.filtered_sum)
         self.filtered_sum = [i*10 for i in self.filtered_sum]
 
-
-        #if self.window_start_pos % 640 == 0:
-        self.peaks = find_peaks(self.filtered_sum[-640:])
+        self.peaks = find_peaks(self.filtered_sum[-640:], distance=50, prominence=0.001)
         self.peaks = self.peaks[0]
         self.diff = [t - s for s, t in zip(self.peaks, self.peaks[1:])]
-        
         board = KivySerial()
         self.diff = [i/board.current_sample_rate if board.current_sample_rate != 0 else 0 for i in self.diff]
-
-        self.meanbpm = 60/np.mean(self.diff)
+        if self.window_start_pos % 192 == 0:
+            self.meanbpm = 60/np.mean(self.diff)
         #print(self.meanbpm)
 
         #if(self.flag_first_filter):
-        self.filtered_sum = self.filtered_sum[-32:]
-
+        self.filtered_sum = self.filtered_sum[-200:-200+32]
+        #self.peaks = [i for i in self.peaks if i >= 640-32]
         self.window_start_pos += self.stride
 
     def get_filtered_data(self):
         logic_peak = [1 if i in self.peaks else 0 for i in range(640)]
-        #print(self.peaks)
-        return logic_peak[-32:], self.filtered_sum[-32:]
+        logic_peak = logic_peak[-200:-200+32]
+        logic_peak = [self.filtered_sum[i]*logic_peak[i] for i in range(32)]
+        return logic_peak, self.filtered_sum
