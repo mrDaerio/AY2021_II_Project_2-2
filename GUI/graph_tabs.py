@@ -143,6 +143,7 @@ class LIS3DHTabbedPanelItem(TabbedPanelItem):
         y_max = max(global_y_max)
 
         y_max = int(y_max * 100)/100 #correct error on autoscale for y_max format
+        y_min = int(y_min * 100)/100 #correct error on autoscale for y_max format
         
         if (y_min != y_max):
             min_val, max_val, major_ticks, minor_ticks = self.get_bounds_and_ticks(

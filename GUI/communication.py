@@ -493,9 +493,9 @@ class Signal():
     def filter(self):
         #calculate filter coefficients
         nyq = 0.5 * 200
-        low = 20 / nyq
+        low = 10 / nyq
         high = 50 / nyq
-        b, a = butter(4, [low, high], btype='band')
+        b, a = butter(6, [low, high], btype='band')
         x_windowed = self.x_data[self.window_start_pos:self.window_start_pos+self.window_length]
         y_windowed = self.y_data[self.window_start_pos:self.window_start_pos+self.window_length]
         z_windowed =self.z_data[self.window_start_pos:self.window_start_pos+self.window_length]
@@ -519,8 +519,14 @@ class Signal():
         self.filtered_sum = lfilter(b, a, principal_component)
 
         self.filtered_sum = np.abs(hilbert(self.filtered_sum))
+        #lowpass?
+        b,a = butter(4,2/nyq,'low')
+        self.filtered_sum = lfilter(b,a,self.filtered_sum)
+        self.filtered_sum = [i*10 for i in self.filtered_sum]
+
+
         #if self.window_start_pos % 640 == 0:
-        self.peaks = find_peaks(self.filtered_sum[-640:], distance=50, prominence=0.015)
+        self.peaks = find_peaks(self.filtered_sum[-640:])
         self.peaks = self.peaks[0]
         self.diff = [t - s for s, t in zip(self.peaks, self.peaks[1:])]
         
