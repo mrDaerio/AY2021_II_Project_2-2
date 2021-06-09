@@ -17,6 +17,7 @@
 #include "ErrorCodes.h"
 #include "InterruptRoutines.h"
 
+
 #define LED_ON 99
 #define LED_BLINK 50
 
@@ -24,13 +25,6 @@
 #define TAIL 0xC0
 
 #define BUFFER_SIZE 194
-
-#define XH 1
-#define XL 2
-#define YH 3
-#define YL 4
-#define ZH 5
-#define ZL 6
 
 uint8_t flag = 0;
 int16_t x_buffer[FIFO_SIZE], y_buffer[FIFO_SIZE], z_buffer[FIFO_SIZE];
@@ -49,6 +43,13 @@ int main(void)
     char message[50] = {'\0'};
     
     CyDelay(5); //"The boot procedure is complete about 5 ms after device power-up."
+    
+    if (!I2C_Peripheral_IsDeviceConnected(LIS3DH_DEVICE_ADDRESS))
+        PWM_LED_WriteCompare(LED_BLINK);
+    else
+        PWM_LED_WriteCompare(LED_ON);
+        
+    CyDelay(10);
     
     /*      I2C Master Read - WHOAMI Register       */
     uint8_t whoami_reg;
@@ -73,12 +74,8 @@ int main(void)
     error_check(error);
 
     buffer[0] = HEAD;
-    buffer[193] = TAIL;
+    buffer[BUFFER_SIZE-1] = TAIL;
     
-    if (!I2C_Peripheral_IsDeviceConnected(LIS3DH_DEVICE_ADDRESS))
-        PWM_LED_WriteCompare(LED_BLINK);
-    else
-        PWM_LED_WriteCompare(LED_ON);
 
     for(;;)
     {      
@@ -93,7 +90,7 @@ int main(void)
                     buffer[2*(i + 2*FIFO_SIZE)] = z_buffer[i-1];
             }
             UART_BT_PutArray(buffer, BUFFER_SIZE);
-            UART_DEBUG_PutArray(buffer, BUFFER_SIZE);
+            // UART_DEBUG_PutArray(buffer, BUFFER_SIZE);
         }    
     }
 }

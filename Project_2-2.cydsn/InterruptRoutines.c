@@ -2,6 +2,7 @@
 #include "project.h"
 #include "LIS3DH.h"
 #include "ErrorCodes.h"
+#include "EEPROM_fun.h"
 
 CY_ISR(Custom_ISR_FIFO)
 {
@@ -13,12 +14,19 @@ CY_ISR(Custom_ISR_FIFO)
 
 CY_ISR(Custom_ISR_RXBT)
 {   
+    char message[50] = {'\0'};
     ErrorCode error;
     char ch_received = UART_BT_GetChar();
     switch(ch_received)
     {
         case 'v':
-        UART_BT_PutString("$$$LIS");
+        
+        // Retrieve the values saved in the EEPROM
+        datarate = Sample_Rate_Read();
+        fsc = Full_Scale_Read();
+        
+        sprintf(message, "$$$LIS %d %d", datarate, fsc);
+        UART_BT_PutString(message);
         UART_DEBUG_PutString("COMMUNICATION START\n");
             break;
 
@@ -28,64 +36,58 @@ CY_ISR(Custom_ISR_RXBT)
         UART_DEBUG_PutString("STOP\n");
             break;
 
-        case 'b':
+        case 'b': 
         // Set the datarate
         error = set_datarate(datarate);
         error_check(error);
+        
         // Set the full scale range
         error = set_range(fsc);
         error_check(error);
+        
         UART_DEBUG_PutString("START\n");
             break;
         
-        // Different possibilities for the datarate
-        case '0':
-        datarate = LIS3DH_DATARATE_1_HZ;
-            break;
-        
-        case '1':
-        datarate = LIS3DH_DATARATE_10_HZ;
-            break;
-        
-        case '2':
-        datarate = LIS3DH_DATARATE_25_HZ;
-            break;
-        
-        case '3':
-        datarate = LIS3DH_DATARATE_50_HZ;
-            break;
-        
+        // Different possibilities for the datarate        
         case '4':
         datarate = LIS3DH_DATARATE_100_HZ;
+        EEPROM_WriteByte(datarate, SAMPLE_RATE_ADDRESS);
             break;
         
         case '5':
         datarate = LIS3DH_DATARATE_200_HZ;
+        EEPROM_WriteByte(datarate, SAMPLE_RATE_ADDRESS);
             break;
         
         case '6':
         datarate = LIS3DH_DATARATE_400_HZ;
+        EEPROM_WriteByte(datarate, SAMPLE_RATE_ADDRESS);
             break;
         
         case '7':
         datarate = LIS3DH_DATARATE_1344Hz;
+        EEPROM_WriteByte(datarate, SAMPLE_RATE_ADDRESS);
             break;
         
         // Different possibilities for the full scale range
         case 'w':
         fsc = LIS3DH_RANGE_2_G;
+        EEPROM_WriteByte(fsc, FULL_SCALE_ADDRESS);
             break;
         
         case 'x':
         fsc = LIS3DH_RANGE_4_G;
+        EEPROM_WriteByte(fsc, FULL_SCALE_ADDRESS);
             break;
         
         case 'j':
         fsc = LIS3DH_RANGE_8_G;
+        EEPROM_WriteByte(fsc, FULL_SCALE_ADDRESS);
             break;
         
         case 'k':
         fsc = LIS3DH_RANGE_16_G;
+        EEPROM_WriteByte(fsc, FULL_SCALE_ADDRESS);
             break;
         default:
             break;

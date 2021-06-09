@@ -28,7 +28,7 @@ void error_check (ErrorCode error)
         UART_DEBUG_PutString("\nError in writing I2C register");
         break;
     case I2C_READ_REGISTER_MULTI_ERROR:
-        UART_DEBUG_PutString("\nError in reading multiple I2C registers ");
+        UART_DEBUG_PutString("\nError in reading multiple I2C registers, check FIFO_read function");
          break;
     case I2C_WRITE_REGISTER_MULTI_ERROR:
         UART_DEBUG_PutString("\nError in writing multiple I2C registers");
