@@ -201,6 +201,10 @@ class KivySerial(EventDispatcher, metaclass=Singleton):
                 while (port.in_waiting > 0):
                     received_string += port.read().decode('utf-8', errors='replace')
                 if ('$$$' in received_string and 'LIS' in received_string):
+                    datarate = received_string.split(' ')[1]
+                    fsc = received_string.split(' ')[2]
+                    self.sample_rate = {"5": 100, "6": 200, "7": 400, "9": 1344}[datarate]
+                    #self.full_scale_range = {"0": 2, "1": 4, "2": 8, "3": 16}[fsc]
                     self.message_string = 'Device found on port: {}'.format(
                         port_name)
                     self.connected = CONNECTION_STATE_FOUND
@@ -225,8 +229,8 @@ class KivySerial(EventDispatcher, metaclass=Singleton):
             self.message_string = f'Error when opening port'
             return -1
         if (self.port.is_open):
-            self.message_string = f'Device connected at {self.port_name}'
-            self.update_sample_rate_on_board('200 Hz')
+            self.message_string = f'Device connected at {self.port_name}, Sample rate to {self.sample_rate} Hz'
+            #self.update_sample_rate_on_board('200 Hz')
             self.connected = CONNECTION_STATE_CONNECTED
             return 0
         return -1
@@ -277,9 +281,10 @@ class KivySerial(EventDispatcher, metaclass=Singleton):
             diff = (datetime.now() - self.initial_time).total_seconds()
             if (diff != 0):
                 self.current_sample_rate = (self.samples_counter + 1) / diff
-                bpm_to_print = int(self.signal.meanbpm) if self.signal.meanbpm == self.signal.meanbpm else 0 
-                self.message_string = f'Heart rate: {bpm_to_print:3d} | Sample Rate: {self.current_sample_rate:5.2f} Hz'
-                self.HR_string = f'{bpm_to_print:3d}'
+                bpm_to_print = int(self.signal.meanbpm) if self.signal.meanbpm == self.signal.meanbpm else 0
+                self.message_string = f'Sample Rate: {self.current_sample_rate:5.2f} Hz'
+                
+                self.HR_string = f'{bpm_to_print:3d}' if bpm_to_print != 0 else '-'
         self.samples_counter += 32
 
     ##
