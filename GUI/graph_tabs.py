@@ -17,15 +17,12 @@ class GraphTabs(TabbedPanel):
 
     ##
     #   @brief          Reference to acceleration tabbed item.
-    acc_tab = ObjectProperty(None)
-
     altro_tab = ObjectProperty(None)
 
     ##
     #   @brief          Update plots with new packet of data
     #   @param[in]      packet: new packet of data.
-    def update_plot(self, packet, s):
-        #self.acc_tab.update_plot_raw(packet)
+    def update_plot(self, s):
         self.altro_tab.update_plot_filtered(s)
 
     ##
@@ -33,8 +30,12 @@ class GraphTabs(TabbedPanel):
     #   @param[in]      instance: object calling the update function
     #   @param[in]      value: new sample rate value
     def update_sample_rate(self, instance, value):
-        self.acc_tab.update_sample_rate(value)
         self.altro_tab.update_sample_rate(value)
+
+    def update_HR_label(self, instance, value):
+        self.altro_tab.update_HR_label(value)
+
+
 ##
 #   @brief          Tabbed panel item to show acceleration data.
 #
@@ -52,6 +53,9 @@ class LIS3DHTabbedPanelItem(TabbedPanelItem):
     ##
     #   @brief          Autoscale setting.
     autoscale = BooleanProperty(False)
+
+    def update_HR_label(self, value):
+        self.plot_settings.update_HR_label(value)
 
     def __init__(self, **kwargs):
         self.max_seconds = 20                # Maximum number of seconds to show
@@ -214,6 +218,7 @@ class LIS3DHTabbedPanelItem(TabbedPanelItem):
         self.graph.x_ticks_major = major_ticks
         self.graph.x_ticks_minor = minor_ticks
 
+    '''
     ##
     #   @brief          Update plot with new packet.
     #
@@ -240,6 +245,7 @@ class LIS3DHTabbedPanelItem(TabbedPanelItem):
 
         if (self.autoscale):
             self.autoscale_plots()
+    '''
 
     def update_plot_filtered(self, s):
         if (s.flag_first_filter):
@@ -318,6 +324,18 @@ class PlotSettings(BoxLayout):
 
     ymin = NumericProperty()
     ymax = NumericProperty()
+
+    ##
+    #   @brief          Reference to label displaying debug messages.
+    hr_label = ObjectProperty(None)
+
+    ##
+    #   @brief          Update current text and display new received string.
+    #
+    #   @param[in]      instance: the object updating text.
+    #   @param[in]      value: the new string to be shown.
+    def update_HR_label(self, value):
+        self.hr_label.text = value
 
     def __init__(self, **kwargs):
         super(PlotSettings, self).__init__(**kwargs)

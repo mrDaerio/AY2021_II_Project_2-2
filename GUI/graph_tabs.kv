@@ -3,11 +3,7 @@
 
 <GraphTabs>:
     do_default_tab: False
-    acc_tab: _acc_tab
     altro_tab: _altro_tab
-    LIS3DHTabbedPanelItem:
-        text: 'Acceleration'
-        id: _acc_tab
     LIS3DHTabbedPanelItem:
         text : 'Filtered data'
         id: _altro_tab
@@ -33,6 +29,8 @@
     ymin_input: _ymin
     ymax_input: _ymax
     autoscale_checkbox: _autoscale_checkbox
+    hr_label: _heart_rate
+
     GridLayout:
         cols: 2
         spacing: 5
@@ -65,8 +63,20 @@
             id: _seconds_spinner
             values: ['1','5','10','20']
             text: '20'
-    Widget:
-        size_hint_y: 0.5
+    BoxLayout:
+        size_hint_y: 0.4
+        canvas.before:
+            Color:
+                rgba: 1.0, 1.0, 0.1, 1.0
+            Rectangle:
+                pos: self.pos
+                size: self.size
+        Label:
+            id: _heart_rate
+            text: '0'
+            font_size: 90
+            color: 0, 0, 0, 1.0
+            
 
 <PlotSettingsLabel@Label>:
     canvas.before:

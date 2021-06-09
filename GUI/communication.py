@@ -107,6 +107,8 @@ class KivySerial(EventDispatcher, metaclass=Singleton):
     #   module.
     message_string = StringProperty('')
 
+    HR_string = StringProperty('')
+
     ##
     #   @brief          Sample rate set on the board.
     #
@@ -262,7 +264,7 @@ class KivySerial(EventDispatcher, metaclass=Singleton):
             packet = self.read_serial_binary()
             if (packet):
                 for callback in self.callbacks:
-                    callback(packet, self.signal)
+                    callback(self.signal)
                 self.update_sample_rate()
 
     ##
@@ -277,6 +279,7 @@ class KivySerial(EventDispatcher, metaclass=Singleton):
                 self.current_sample_rate = (self.samples_counter + 1) / diff
                 bpm_to_print = int(self.signal.meanbpm) if self.signal.meanbpm == self.signal.meanbpm else 0 
                 self.message_string = f'Heart rate: {bpm_to_print:3d} | Sample Rate: {self.current_sample_rate:5.2f} Hz'
+                self.HR_string = f'{bpm_to_print:3d}'
         self.samples_counter += 32
 
     ##

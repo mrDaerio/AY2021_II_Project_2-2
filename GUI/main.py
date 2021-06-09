@@ -87,6 +87,7 @@ class ContainerLayout(BoxLayout):
     def on_graph_w(self, instance, value):
         self.serial.add_callback(self.graph_w.update_plot)
         self.serial.bind(sample_rate=self.graph_w.update_sample_rate)
+        self.serial.bind(HR_string=self.graph_w.update_HR_label)
 
     ##
     #   @brief          Callback called when the connection status changes.
