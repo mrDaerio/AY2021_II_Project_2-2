@@ -20,16 +20,14 @@ CY_ISR(Custom_ISR_RXBT)
     switch(ch_received)
     {
         case 'v':
-        UART_BT_PutString("$$$LIS");
-        UART_DEBUG_PutString("COMMUNICATION START\n");
         
         // Retrieve the values saved in the EEPROM
         datarate = Sample_Rate_Read();
         fsc = Full_Scale_Read();
-        sprintf(message, "Datarate: %d\n", datarate);
-        UART_DEBUG_PutString(message);
-        sprintf(message, "FSR: %d\n", fsc);
-        UART_DEBUG_PutString(message);
+        
+        sprintf(message, "$$$LIS %d %d", datarate, fsc);
+        UART_BT_PutString(message);
+        UART_DEBUG_PutString("COMMUNICATION START\n");
             break;
 
         case 's':
