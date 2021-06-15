@@ -499,18 +499,15 @@ class Signal():
             self.flag_first_filter = True
 
     def filter(self):
-        #calculate filter coefficients
-        nyq = 0.5 * 200
-        low = 10 / nyq
-        high = 50 / nyq
-        b, a = butter(6, [low, high], btype='band')
+
+        #select a window of data to be considered
         x_windowed = self.x_data[self.window_start_pos:self.window_start_pos+self.window_length]
         y_windowed = self.y_data[self.window_start_pos:self.window_start_pos+self.window_length]
         z_windowed =self.z_data[self.window_start_pos:self.window_start_pos+self.window_length]
-
-        """
-            PCA
-        """
+        
+        ###############
+        #     PCA     #
+        ###############
         pca = PCA(n_components = 1)
         #create dataframe
         matrix = pd.DataFrame({'x' : x_windowed,
@@ -518,32 +515,49 @@ class Signal():
                                'z' : z_windowed})
         #remove mean
         matrix = matrix-matrix.mean()
-        #print(matrix)
         #find principal component
         principal_component = pca.fit_transform(matrix)
+        #convert to list
         principal_component = [i[0] for i in principal_component]
-        #print(principal_component)
 
+        ################
+        #    FILTER    #
+        ################
+        #calculate filter coefficients
+        nyq = 0.5 * 200
+        low = 10 / nyq
+        high = 50 / nyq
+        b, a = butter(6, [low, high], btype='band')
+        #filter the principal component
         self.filtered_sum = lfilter(b, a, principal_component)
-
+        
+        ##################
+        # PEAK DETECTION #
+        ##################
+        #calculate envelope
         self.filtered_sum = np.abs(hilbert(self.filtered_sum))
-        #lowpass?
+        #smooth envelope with lowpass filter
         b,a = butter(4,2/nyq,'low')
         self.filtered_sum = lfilter(b,a,self.filtered_sum)
-        self.filtered_sum = [i*10 for i in self.filtered_sum]
-
+        #calculate peaks
         self.peaks = find_peaks(self.filtered_sum[-640:], distance=50, prominence=0.001)
         self.peaks = self.peaks[0]
+        #calculate RR intervals
         self.diff = [t - s for s, t in zip(self.peaks, self.peaks[1:])]
+        #calculate frequency
         board = KivySerial()
         self.diff = [i/board.current_sample_rate if board.current_sample_rate != 0 else 0 for i in self.diff]
+        #convert frequency to bpm
         if self.window_start_pos % 192 == 0:
             self.meanbpm = 60/np.mean(self.diff)
-        #print(self.meanbpm)
 
-        #if(self.flag_first_filter):
+        ########################
+        # EXTRACTION OF SIGNAL #
+        ########################
+        #take middle part of filter to avoid border effects
         self.filtered_sum = self.filtered_sum[-200:-200+32]
-        #self.peaks = [i for i in self.peaks if i >= 640-32]
+        
+        #move the window by the length of the packet
         self.window_start_pos += self.stride
 
     def get_filtered_data(self):
