@@ -11,7 +11,7 @@ Double click on the file "Workspace01.cywrk", PSoC Creator will automatically op
 
 You can use a rubber band to tie the sensor close to the body like so:
 
-![3DModel](C:\Users\Stefano\Desktop\AY2021_II_Project_2-2\3DModel.gif)
+![](3DModel.gif)
 
 Now you can run the "main.py" file in "GUI" folder and you're ready to go!
 
