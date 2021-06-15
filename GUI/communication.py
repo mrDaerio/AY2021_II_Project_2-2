@@ -468,11 +468,10 @@ class Signal():
         self.z_data = []
         self.window_start_pos = 0
         self.stride = 32
-        self.window_length = 2080
+        self.filter_window_length = 2080
         self.filtered_sum = []
         self.flag_first_filter = False
-        self.diff = 0
-        self.peaks = 0
+        self.peaks = []
         self.meanbpm = 0
 
     ##
@@ -494,16 +493,16 @@ class Signal():
         self.x_data += x
         self.y_data += y
         self.z_data += z
-        if (len(self.x_data)>=self.window_length):
+        if (len(self.x_data)>=self.filter_window_length):
             self.filter()
             self.flag_first_filter = True
 
     def filter(self):
 
         #select a window of data to be considered
-        x_windowed = self.x_data[self.window_start_pos:self.window_start_pos+self.window_length]
-        y_windowed = self.y_data[self.window_start_pos:self.window_start_pos+self.window_length]
-        z_windowed =self.z_data[self.window_start_pos:self.window_start_pos+self.window_length]
+        x_windowed = self.x_data[self.window_start_pos:self.window_start_pos+self.filter_window_length]
+        y_windowed = self.y_data[self.window_start_pos:self.window_start_pos+self.filter_window_length]
+        z_windowed =self.z_data[self.window_start_pos:self.window_start_pos+self.filter_window_length]
         
         ###############
         #     PCA     #
@@ -536,20 +535,37 @@ class Signal():
         ##################
         #calculate envelope
         self.filtered_sum = np.abs(hilbert(self.filtered_sum))
-        #smooth envelope with lowpass filter
-        b,a = butter(4,2/nyq,'low')
+        #smooth envelope with lowpass filter (adaptive)
+        fcut = (self.meanbpm//120)+2
+        b,a = butter(4,fcut/nyq,'low')
         self.filtered_sum = lfilter(b,a,self.filtered_sum)
-        #calculate peaks
-        self.peaks = find_peaks(self.filtered_sum[-640:], distance=50, prominence=0.001)
-        self.peaks = self.peaks[0]
-        #calculate RR intervals
-        self.diff = [t - s for s, t in zip(self.peaks, self.peaks[1:])]
-        #calculate frequency
-        board = KivySerial()
-        self.diff = [i/board.current_sample_rate if board.current_sample_rate != 0 else 0 for i in self.diff]
-        #convert frequency to bpm
-        if self.window_start_pos % 192 == 0:
-            self.meanbpm = 60/np.mean(self.diff)
+        #consider just the last approximately 3 seconds
+        self.filtered_sum = self.filtered_sum[-640:]
+        minval = min(self.filtered_sum)
+        maxval = max(self.filtered_sum)
+        signal_range = maxval-minval
+        if (signal_range>0.007): # if above threshold look for peaks
+            prominence = 0.5 * signal_range
+            self.peaks = find_peaks(self.filtered_sum,
+                                    distance=50,
+                                    prominence=prominence)
+            self.peaks = self.peaks[0]
+
+            ###################
+            # BPM CALCULATION #
+            ###################
+            if self.window_start_pos % 192 == 0 and self.peaks != []: #update approximately every second
+                #calculate RR intervals (in samples)
+                RR = [t - s for s, t in zip(self.peaks, self.peaks[1:])]
+                #calculate RR intervals (in seconds)
+                board = KivySerial()
+                RR = [i/board.current_sample_rate if board.current_sample_rate != 0 else 0 for i in RR]
+                #convert to bpm
+                self.meanbpm = 60/np.mean(RR)
+        else:
+            self.peaks = []
+            self.meanbpm = 0
+
 
         ########################
         # EXTRACTION OF SIGNAL #
@@ -561,7 +577,7 @@ class Signal():
         self.window_start_pos += self.stride
 
     def get_filtered_data(self):
-        logic_peak = [1 if i in self.peaks else 0 for i in range(640)]
-        logic_peak = logic_peak[-200:-200+32]
-        logic_peak = [self.filtered_sum[i]*logic_peak[i] for i in range(32)]
+        logic_peak = [self.filtered_sum[i] if i+640-200 in self.peaks
+                      else 0
+                      for i in range(len(self.filtered_sum))]
         return logic_peak, self.filtered_sum
