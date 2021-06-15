@@ -2,6 +2,7 @@ from kivy.properties import NumericProperty, ObjectProperty, StringProperty
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.popup import Popup
 from communication import KivySerial
+import os
 
 class Toolbar(BoxLayout):
     """
@@ -18,6 +19,7 @@ class Toolbar(BoxLayout):
 
     def __init__(self, **kwargs):
         super(Toolbar, self).__init__(**kwargs)
+        self.board = KivySerial()
 
     def sample_rate_dialog(self):
         """
@@ -35,7 +37,35 @@ class Toolbar(BoxLayout):
         popup = FullScaleRangeDialog()
         popup.open()
 
+    def output_file_dialog(self):
+        if self.board.signal.x_data != []:
+            popup = SaveDialog()
+            popup.open()
+        #else print 'no data collected'?
 
+class SaveDialog(Popup):
+    save = ObjectProperty(None)
+    text_input = ObjectProperty(None)
+    cancel = ObjectProperty(None)
+
+    def __init__(self, **kwargs):
+        self.board = KivySerial()
+        super(SaveDialog, self).__init__(**kwargs)
+
+    def save(self, path, filename):
+        if filename[-4:].lower() != '.csv':
+            filename += '.csv'
+        with open(os.path.join(path, filename), 'w') as csv_file:
+            #save whole raw data of the session in an unique csv file
+            csv_file.write('x,y,z\n')
+            for i in range(len(self.board.signal.x_data)):
+                csv_file.write(str(self.board.signal.x_data[i])+','+
+                               str(self.board.signal.y_data[i])+','+
+                               str(self.board.signal.z_data[i])+'\n')
+        self.dismiss()
+
+    def cancel(self):
+        self.dismiss()
 
 class SampleRateDialog(Popup):
     """
