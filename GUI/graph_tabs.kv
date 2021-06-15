@@ -30,6 +30,8 @@
     ymax_input: _ymax
     autoscale_checkbox: _autoscale_checkbox
     hr_label: _heart_rate
+    hr_min: _hr_min
+    hr_max: _hr_max
 
     GridLayout:
         cols: 2
@@ -63,7 +65,10 @@
             id: _seconds_spinner
             values: ['1','5','10','20']
             text: '20'
-    BoxLayout:
+    GridLayout:
+        cols: 2
+        spacing: 5
+        padding: 5
         size_hint_y: 0.4
         canvas.before:
             Color:
@@ -71,10 +76,23 @@
             Rectangle:
                 pos: self.pos
                 size: self.size
+        PlotSettingsLabel:
+            text: 'HR'
         Label:
             id: _heart_rate
             text: ''
-            font_size: 90
+            color: 0, 0, 0, 1.0
+        PlotSettingsLabel:
+            text: 'min HR'
+        Label:
+            id: _hr_min
+            text: ''
+            color: 0, 0, 0, 1.0
+        PlotSettingsLabel:
+            text: 'max HR'
+        Label:
+            id: _hr_max
+            text: ''
             color: 0, 0, 0, 1.0
             
 

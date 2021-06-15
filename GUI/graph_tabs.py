@@ -146,7 +146,7 @@ class LIS3DHTabbedPanelItem(TabbedPanelItem):
         y_min = min(global_y_min)
         y_max = max(global_y_max)
 
-        y_max = int(y_max * 100)/100 #correct error on autoscale for y_max format
+        y_max = (int(y_max * 100)+1)/100 #correct error on autoscale for y_max format
         y_min = int(y_min * 100)/100 #correct error on autoscale for y_max format
         
         if (y_min != y_max):
@@ -326,16 +326,25 @@ class PlotSettings(BoxLayout):
     ymax = NumericProperty()
 
     ##
-    #   @brief          Reference to label displaying debug messages.
+    #   @brief          Reference to label displaying bpm data
     hr_label = ObjectProperty(None)
+    hr_min = ObjectProperty(None)
+    hr_max = ObjectProperty(None)
 
     ##
     #   @brief          Update current text and display new received string.
     #
-    #   @param[in]      instance: the object updating text.
     #   @param[in]      value: the new string to be shown.
     def update_HR_label(self, value):
         self.hr_label.text = value
+        for x in self.hr_min,self.hr_max:
+            if x.text == '' or x.text == '-':
+                x.text=value
+        if value!= '-' and value != '':
+            if value < self.hr_min.text:
+                self.hr_min.text = value
+            if value > self.hr_max.text:
+                self.hr_max.text = value
 
     def __init__(self, **kwargs):
         super(PlotSettings, self).__init__(**kwargs)
