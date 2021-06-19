@@ -17,20 +17,24 @@ class GraphTabs(TabbedPanel):
 
     ##
     #   @brief          Reference to acceleration tabbed item.
-    acc_tab = ObjectProperty(None)
+    altro_tab = ObjectProperty(None)
 
     ##
     #   @brief          Update plots with new packet of data
     #   @param[in]      packet: new packet of data.
-    def update_plot(self, packet):
-        self.acc_tab.update_plot(packet)
+    def update_plot(self, s):
+        self.altro_tab.update_plot_filtered(s)
 
     ##
     #   @brief          Update sample rate value in plots.
     #   @param[in]      instance: object calling the update function
     #   @param[in]      value: new sample rate value
     def update_sample_rate(self, instance, value):
-        self.acc_tab.update_sample_rate(value)
+        self.altro_tab.update_sample_rate(value)
+
+    def update_HR_label(self, instance, value):
+        self.altro_tab.update_HR_label(value)
+
 
 ##
 #   @brief          Tabbed panel item to show acceleration data.
@@ -49,6 +53,9 @@ class LIS3DHTabbedPanelItem(TabbedPanelItem):
     ##
     #   @brief          Autoscale setting.
     autoscale = BooleanProperty(False)
+
+    def update_HR_label(self, value):
+        self.plot_settings.update_HR_label(value)
 
     def __init__(self, **kwargs):
         self.max_seconds = 20                # Maximum number of seconds to show
@@ -138,6 +145,10 @@ class LIS3DHTabbedPanelItem(TabbedPanelItem):
 
         y_min = min(global_y_min)
         y_max = max(global_y_max)
+
+        y_max = (int(y_max * 100)+1)/100 #correct error on autoscale for y_max format
+        y_min = int(y_min * 100)/100 #correct error on autoscale for y_max format
+        
         if (y_min != y_max):
             min_val, max_val, major_ticks, minor_ticks = self.get_bounds_and_ticks(
                 y_min, y_max, 10)
@@ -207,31 +218,50 @@ class LIS3DHTabbedPanelItem(TabbedPanelItem):
         self.graph.x_ticks_major = major_ticks
         self.graph.x_ticks_minor = minor_ticks
 
+    '''
     ##
     #   @brief          Update plot with new packet.
     #
     #   @param[in]      packet: new packet received.
-    def update_plot(self, packet):
-        self.x_axis_n_points_collected.append(packet.get_x_data())
-        self.y_axis_n_points_collected.append(packet.get_y_data())
-        self.z_axis_n_points_collected.append(packet.get_z_data())
-        if (len(self.x_axis_n_points_collected) == self.n_points_per_update):
-            for idx in range(self.n_points_per_update):
+    def update_plot_raw(self, packet):
+        self.x_axis_n_points_collected = packet.get_x_data()
+        self.y_axis_n_points_collected = packet.get_y_data()
+        self.z_axis_n_points_collected = packet.get_z_data()
+
+        for idx in range(len(self.x_axis_n_points_collected)):
+            self.x_axis_points.append(self.x_axis_points.pop(0))
+            self.x_axis_points[-1] = self.x_axis_n_points_collected[idx]
+            self.y_axis_points.append(self.y_axis_points.pop(0))
+            self.y_axis_points[-1] = self.y_axis_n_points_collected[idx]
+            self.z_axis_points.append(self.z_axis_points.pop(0))
+            self.z_axis_points[-1] = self.z_axis_n_points_collected[idx]
+        self.x_plot.points = zip(self.x_points, self.x_axis_points)
+        self.y_plot.points = zip(self.x_points, self.y_axis_points)
+        self.z_plot.points = zip(self.x_points, self.z_axis_points)
+
+        self.x_axis_n_points_collected = []
+        self.y_axis_n_points_collected = []
+        self.z_axis_n_points_collected = []
+
+        if (self.autoscale):
+            self.autoscale_plots()
+    '''
+
+    def update_plot_filtered(self, s):
+        if (s.flag_first_filter):
+            self.x_axis_n_points_collected, self.y_axis_n_points_collected = s.get_filtered_data()
+            for idx in range(len(self.x_axis_n_points_collected)):
                 self.x_axis_points.append(self.x_axis_points.pop(0))
                 self.x_axis_points[-1] = self.x_axis_n_points_collected[idx]
                 self.y_axis_points.append(self.y_axis_points.pop(0))
                 self.y_axis_points[-1] = self.y_axis_n_points_collected[idx]
-                self.z_axis_points.append(self.z_axis_points.pop(0))
-                self.z_axis_points[-1] = self.z_axis_n_points_collected[idx]
             self.x_plot.points = zip(self.x_points, self.x_axis_points)
             self.y_plot.points = zip(self.x_points, self.y_axis_points)
-            self.z_plot.points = zip(self.x_points, self.z_axis_points)
             self.x_axis_n_points_collected = []
             self.y_axis_n_points_collected = []
-            self.z_axis_n_points_collected = []
 
-            if (self.autoscale):
-                self.autoscale_plots()
+        if (self.autoscale):
+            self.autoscale_plots()
 
     ##
     #   @brief          Update plots based on new sample rate value.
@@ -256,7 +286,7 @@ class LIS3DHTabbedPanelItem(TabbedPanelItem):
         self.x_plot.points = zip(self.x_points, self.x_axis_points)
         self.y_plot.points = zip(self.x_points, self.y_axis_points)
         self.z_plot.points = zip(self.x_points, self.z_axis_points)
-
+        
         if (samples_per_second > 60):
             self.n_points_per_update = 5
         else:
@@ -294,6 +324,27 @@ class PlotSettings(BoxLayout):
 
     ymin = NumericProperty()
     ymax = NumericProperty()
+
+    ##
+    #   @brief          Reference to label displaying bpm data
+    hr_label = ObjectProperty(None)
+    hr_min = ObjectProperty(None)
+    hr_max = ObjectProperty(None)
+
+    ##
+    #   @brief          Update current text and display new received string.
+    #
+    #   @param[in]      value: the new string to be shown.
+    def update_HR_label(self, value):
+        self.hr_label.text = value
+        for x in self.hr_min,self.hr_max:
+            if x.text == '' or x.text == '-':
+                x.text=value
+        if value!= '-' and value != '':
+            if value < self.hr_min.text:
+                self.hr_min.text = value
+            if value > self.hr_max.text:
+                self.hr_max.text = value
 
     def __init__(self, **kwargs):
         super(PlotSettings, self).__init__(**kwargs)

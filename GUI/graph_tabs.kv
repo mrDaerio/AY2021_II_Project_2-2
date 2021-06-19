@@ -3,12 +3,12 @@
 
 <GraphTabs>:
     do_default_tab: False
-    acc_tab: _acc_tab
+    altro_tab: _altro_tab
     LIS3DHTabbedPanelItem:
-        id: _acc_tab
+        text : 'Filtered data'
+        id: _altro_tab
 
 <LIS3DHTabbedPanelItem>:
-    text: 'Acceleration'
     graph: _graph
     plot_settings: _plot_settings
     BoxLayout:
@@ -29,6 +29,10 @@
     ymin_input: _ymin
     ymax_input: _ymax
     autoscale_checkbox: _autoscale_checkbox
+    hr_label: _heart_rate
+    hr_min: _hr_min
+    hr_max: _hr_max
+
     GridLayout:
         cols: 2
         spacing: 5
@@ -61,8 +65,36 @@
             id: _seconds_spinner
             values: ['1','5','10','20']
             text: '20'
-    Widget:
-        size_hint_y: 0.5
+    GridLayout:
+        cols: 2
+        spacing: 5
+        padding: 5
+        size_hint_y: 0.4
+        canvas.before:
+            Color:
+                rgba: 1.0, 1.0, 0.1, 1.0
+            Rectangle:
+                pos: self.pos
+                size: self.size
+        PlotSettingsLabel:
+            text: 'HR'
+        Label:
+            id: _heart_rate
+            text: ''
+            color: 0, 0, 0, 1.0
+        PlotSettingsLabel:
+            text: 'min HR'
+        Label:
+            id: _hr_min
+            text: ''
+            color: 0, 0, 0, 1.0
+        PlotSettingsLabel:
+            text: 'max HR'
+        Label:
+            id: _hr_max
+            text: ''
+            color: 0, 0, 0, 1.0
+            
 
 <PlotSettingsLabel@Label>:
     canvas.before:

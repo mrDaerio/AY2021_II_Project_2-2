@@ -1,14 +1,18 @@
 ##
 # @package communication
-
 from datetime import datetime
 from kivy.event import EventDispatcher
-from kivy.properties import NumericProperty, StringProperty  # pylint: disable=no-name-in-module
+from kivy.properties import NumericProperty, StringProperty
+from numpy import matrixlib  # pylint: disable=no-name-in-module
 import serial
 import serial.tools.list_ports as list_ports
 import struct
 import threading
 import time
+from scipy.signal import butter, lfilter, hilbert, find_peaks
+import numpy as np
+from sklearn.decomposition import PCA
+import pandas as pd
 
 ##
 #   @brief          Data packet header.
@@ -50,6 +54,7 @@ CONNECTION_STATE_FOUND = 1
 #
 CONNECTION_STATE_CONNECTED = 2
 
+
 ##
 #   @brief          Class used for Singleton pattern.
 #
@@ -69,6 +74,7 @@ class Singleton(type):
                 Singleton, cls).__call__(*args, **kwargs)
         return cls._instances[cls]
 
+
 ##
 #   @brief          Main class used for serial communication.
 #
@@ -83,7 +89,6 @@ class Singleton(type):
 
 
 class KivySerial(EventDispatcher, metaclass=Singleton):
-
     ##
     #   @brief          Connection status.
     #
@@ -102,6 +107,8 @@ class KivySerial(EventDispatcher, metaclass=Singleton):
     #   module.
     message_string = StringProperty('')
 
+    HR_string = StringProperty('')
+
     ##
     #   @brief          Sample rate set on the board.
     #
@@ -112,21 +119,33 @@ class KivySerial(EventDispatcher, metaclass=Singleton):
     sample_rate = NumericProperty(1)
 
     ##
+    #   @brief          Full Scale Range set on the board.
+    #
+    #   This is the true full scale range value which is set on the board.
+    #   It can be used to compare the full scale range of retrieved values
+    #   to the theoretical one.
+    #
+    full_scale_range = NumericProperty(2)
+
+    i2c_error = NumericProperty(0)   #  property which defines the i2c connection error
+
+    ##
     #  @brief           Initialize the class.
     #
     #  @param[in]       baudrate: the desired baudrate for serial communication.
     #
     def __init__(self, baudrate=115200):
 
-        self.port_name = ""         # port name, set later when port is found
-        self.baudrate = baudrate    # baudrate for serial communication
-        self.is_streaming = False   # streaming status
-        self.connected = 0          # connection status
-        self.read_state = 0         # read state for data parser
-        self.callbacks = []         # list of callbacks to be called when new data are available
-        self.samples_counter = 0    # counter for samples received
-        self.initial_time = 0       # time of first sample received
+        self.port_name = ""  # port name, set later when port is found
+        self.baudrate = baudrate  # baudrate for serial communication
+        self.is_streaming = False  # streaming status
+        self.connected = 0  # connection status
+        self.read_state = 0  # read state for data parser
+        self.callbacks = []  # list of callbacks to be called when new data are available
+        self.samples_counter = 0  # counter for samples received
+        self.initial_time = 0  # time of first sample received
         self.timeout = 1
+        self.signal = Signal()
         # Start thread for automatic port discovery
         find_port_thread = threading.Thread(target=self.find_port, daemon=True)
         find_port_thread.start()
@@ -184,6 +203,10 @@ class KivySerial(EventDispatcher, metaclass=Singleton):
                 while (port.in_waiting > 0):
                     received_string += port.read().decode('utf-8', errors='replace')
                 if ('$$$' in received_string and 'LIS' in received_string):
+                    datarate = received_string.split(' ')[1]
+                    fsc = received_string.split(' ')[2]
+                    self.sample_rate = {"5": 100, "6": 200, "7": 400, "9": 1344}[datarate]
+                    #self.full_scale_range = {"0": 2, "1": 4, "2": 8, "3": 16}[fsc]
                     self.message_string = 'Device found on port: {}'.format(
                         port_name)
                     self.connected = CONNECTION_STATE_FOUND
@@ -208,8 +231,8 @@ class KivySerial(EventDispatcher, metaclass=Singleton):
             self.message_string = f'Error when opening port'
             return -1
         if (self.port.is_open):
-            self.message_string = f'Device connected at {self.port_name}'
-            self.update_sample_rate_on_board('1 Hz')
+            self.message_string = f'Device connected at {self.port_name}, Sample rate to {self.sample_rate} Hz'
+            #self.update_sample_rate_on_board('200 Hz')
             self.connected = CONNECTION_STATE_CONNECTED
             return 0
         return -1
@@ -243,11 +266,11 @@ class KivySerial(EventDispatcher, metaclass=Singleton):
     #   streams them to all the callbacks that were added. It also
     #   updates the computed sample rate.
     def collect_data(self):
-        while(self.is_streaming):
+        while (self.is_streaming):
             packet = self.read_serial_binary()
             if (packet):
                 for callback in self.callbacks:
-                    callback(packet)
+                    callback(self.signal)
                 self.update_sample_rate()
 
     ##
@@ -259,9 +282,12 @@ class KivySerial(EventDispatcher, metaclass=Singleton):
         else:
             diff = (datetime.now() - self.initial_time).total_seconds()
             if (diff != 0):
-                self.current_sample_rate = (self.samples_counter+1) / diff
-                self.message_string = f'Samples: {self.samples_counter:6d} | Sample Rate: {self.current_sample_rate:5.2f} Hz'
-        self.samples_counter += 1
+                self.current_sample_rate = (self.samples_counter + 1) / diff
+                bpm_to_print = int(self.signal.meanbpm) if self.signal.meanbpm == self.signal.meanbpm else 0
+                self.message_string = f'Sample Rate: {self.current_sample_rate:5.2f} Hz'
+                
+                self.HR_string = f'{bpm_to_print:3d}' if bpm_to_print != 0 else '-'
+        self.samples_counter += 32
 
     ##
     #   @brief          Serial data parser.
@@ -269,9 +295,9 @@ class KivySerial(EventDispatcher, metaclass=Singleton):
     #   State machine to parse incoming data packet into a \ref LIS3DHDataPacket
     #   The structure of the incoming packet is as follows:
     #       - Header byte: 0xA0
-    #       - X Axis data: 2 bytes
-    #       - Y Axis data: 2 bytes
-    #       - Z Axis data: 2 bytes
+    #       - X Axis data: 64 bytes
+    #       - Y Axis data: 64 bytes
+    #       - Z Axis data: 64 bytes
     #       - Tail byte: 0xC0
     #
     #   @param[in]      max_bytes_to_skip: optional number of bytes to skip when looking for header byte
@@ -291,14 +317,18 @@ class KivySerial(EventDispatcher, metaclass=Singleton):
                             print(f'Skipped {rep} bytes')
                         rep = 0
                         self.read_state = 1
+                    elif (b == 0xE):
+                        print("Errore i2c")
+                        self.i2c_error = 1
+
             elif (self.read_state == 1):
-                # Get six bytes of acceleration data
-                data = self.port.read(6)
-                if (len(data) == 6):
-                    data = struct.unpack('6B', data)
-                    x_data = self.convert_acc_data(data[0:2])
-                    y_data = self.convert_acc_data(data[2:4])
-                    z_data = self.convert_acc_data(data[4:])
+                # Get six bytes*32 of acceleration data
+                data = self.port.read(6 * 32)
+                if (len(data) == 6 * 32):
+                    data = struct.unpack('192B', data)
+                    x_data = self.convert_acc_data(data[0:64])
+                    y_data = self.convert_acc_data(data[64:128])
+                    z_data = self.convert_acc_data(data[128:192])
                     self.read_state = 2
                 else:
                     self.read_state = 0
@@ -309,6 +339,7 @@ class KivySerial(EventDispatcher, metaclass=Singleton):
                     tail_byte = struct.unpack('B', tail_byte)[0]
                     if (tail_byte == DATA_PACKET_TAIL):
                         packet = LIS3DHDataPacket(x_data, y_data, z_data)
+                        self.signal.append_data(x_data, y_data, z_data)
                         self.read_state = 0
                         return packet
                 else:
@@ -327,17 +358,20 @@ class KivySerial(EventDispatcher, metaclass=Singleton):
     #
     def convert_acc_data(self, data):
         try:
-            temp_data = data[0] << 8 | data[1]
-        except:
+            temp_data = [0 for i in range(len(data) // 2)]
+            for i in range(len(data) // 2):
+                temp_data[i] = data[i * 2] << 8 | data[2 * i + 1]
+                if temp_data[i] & 0x8000:
+                    # We have a negative number
+                    temp_data[i] = 0xFFFF - temp_data[i]
+                    temp_data[i] = temp_data[i] + 1
+                    temp_data[i] = - temp_data[i]
+        except Exception as e:
+            print("errore", e)
             return data
-        if (temp_data & 0x8000):
-            # We have a negative number
-            temp_data = 0xFFFF - temp_data
-            temp_data = temp_data + 1
-            temp_data = - temp_data
-        #temp_data = temp_data >> 6  # 6-byte shift since we are in normal mode
-        #temp_data = temp_data * 4   # Sensitivity of 4 mg/digit in normal mode, +/-2g
-        return temp_data / 1000.
+        # temp_data = temp_data >> 6  # 6-byte shift since we are in normal mode
+        # temp_data = temp_data * 4   # Sensitivity of 4 mg/digit in normal mode, +/-2g
+        return [i / 1000 for i in temp_data]
 
     ##
     #   @brief          Stop data streaming.
@@ -358,12 +392,10 @@ class KivySerial(EventDispatcher, metaclass=Singleton):
     #   @param[in]      value: the desired sample rate to be set.
     def update_sample_rate_on_board(self, value):
         sample_rate_dict = {
-            '1 Hz': '0',
-            '10 Hz': '1',
-            '25 Hz': '2',
-            '50 Hz': '3',
             '100 Hz': '4',
-            '200 Hz': '5'
+            '200 Hz': '5',
+            '400 Hz': '6',
+            '1344 Hz': '7'
         }
         if (self.port.is_open):
             try:
@@ -374,6 +406,27 @@ class KivySerial(EventDispatcher, metaclass=Singleton):
                 self.message_string = "Could not update sample rate"
 
     ##
+    #   @brief          Update full scale range on board
+    #
+    #   Update the accelerometer sample rate based on selected value.
+    #   @param[in]      value: the desired sample rate to be set.
+    def update_fsr_on_board(self, value):
+        fsr_dict = {
+            '+/- 2 g': 'w',
+            '+/- 4 g': 'x',
+            '+/- 8 g': 'j',
+            '+/- 16 g': 'k'
+
+        }
+        if (self.port.is_open):
+            # try:
+            self.port.write(fsr_dict[value].encode('utf-8'))
+            self.message_string = f'Updated full scale range to {value}'
+            self.full_scale_range = int(value.split(' ')[1])
+            # except:
+            # self.message_string = "Could not update full scale range"
+
+    ##
     #   @brief          Get if serial port is connected.
     #   @return         True if connected, False otherwise
     def is_connected(self):
@@ -381,6 +434,7 @@ class KivySerial(EventDispatcher, metaclass=Singleton):
             return True
         else:
             return False
+
 
 ##
 #   @brief          Class holding a packet of accelerometer data.
@@ -410,3 +464,126 @@ class LIS3DHDataPacket():
     #   @brief          Get z axis acceleration.
     def get_z_data(self):
         return self.z_data
+
+
+class Signal():
+
+    def __init__(self):
+        self.x_data = []
+        self.y_data = []
+        self.z_data = []
+        self.window_start_pos = 0
+        self.stride = 32
+        self.filter_window_length = 2080
+        self.filtered_sum = []
+        self.flag_first_filter = False
+        self.peaks = []
+        self.meanbpm = 0
+
+    ##
+    #   @brief          Get x axis acceleration.
+    def get_x_data(self):
+        return self.x_data
+
+    ##
+    #   @brief          Get y axis acceleration.
+    def get_y_data(self):
+        return self.y_data
+
+    ##
+    #   @brief          Get z axis acceleration.
+    def get_z_data(self):
+        return self.z_data
+
+    def append_data(self, x, y, z):
+        self.x_data += x
+        self.y_data += y
+        self.z_data += z
+        if (len(self.x_data)>=self.filter_window_length):
+            self.filter()
+            self.flag_first_filter = True
+
+    def filter(self):
+
+        #select a window of data to be considered
+        x_windowed = self.x_data[self.window_start_pos:self.window_start_pos+self.filter_window_length]
+        y_windowed = self.y_data[self.window_start_pos:self.window_start_pos+self.filter_window_length]
+        z_windowed =self.z_data[self.window_start_pos:self.window_start_pos+self.filter_window_length]
+        
+        ###############
+        #     PCA     #
+        ###############
+        pca = PCA(n_components = 1)
+        #create dataframe
+        matrix = pd.DataFrame({'x' : x_windowed,
+                               'y' : y_windowed,
+                               'z' : z_windowed})
+        #remove mean
+        matrix = matrix-matrix.mean()
+        #find principal component
+        principal_component = pca.fit_transform(matrix)
+        #convert to list
+        principal_component = [i[0] for i in principal_component]
+
+        ################
+        #    FILTER    #
+        ################
+        #calculate filter coefficients
+        nyq = 0.5 * 200
+        low = 10 / nyq
+        high = 50 / nyq
+        b, a = butter(6, [low, high], btype='band')
+        #filter the principal component
+        self.filtered_sum = lfilter(b, a, principal_component)
+        
+        ##################
+        # PEAK DETECTION #
+        ##################
+        #calculate envelope
+        self.filtered_sum = np.abs(hilbert(self.filtered_sum))
+        #smooth envelope with lowpass filter (adaptive)
+        fcut = (self.meanbpm//120)+3
+        b,a = butter(4,fcut/nyq,'low')
+        self.filtered_sum = lfilter(b,a,self.filtered_sum)
+        #consider just the last approximately 3 seconds
+        self.filtered_sum = self.filtered_sum[-480:]
+        minval = min(self.filtered_sum)
+        maxval = max(self.filtered_sum)
+        signal_range = maxval-minval
+        if (signal_range>0.007): # if above threshold look for peaks
+            prominence = 0.5 * signal_range
+            self.peaks = find_peaks(self.filtered_sum,
+                                    distance=50,
+                                    prominence=prominence)
+            self.peaks = self.peaks[0]
+
+            ###################
+            # BPM CALCULATION #
+            ###################
+            if self.window_start_pos % 192 == 0 and self.peaks != []: #update approximately every second
+                #calculate RR intervals (in samples)
+                RR = [t - s for s, t in zip(self.peaks, self.peaks[1:])]
+                #calculate RR intervals (in seconds)
+                board = KivySerial()
+                RR = [i/board.current_sample_rate if board.current_sample_rate != 0 else 0 for i in RR]
+                #convert to bpm
+                self.meanbpm = 60/np.mean(RR)
+        else:
+            self.peaks = []
+            self.meanbpm = 0
+
+
+        ########################
+        # EXTRACTION OF SIGNAL #
+        ########################
+        #take middle part of filter to avoid border effects
+        self.filtered_sum = self.filtered_sum[-240-16:-240+16]
+        
+        #move the window by the length of the packet
+        self.window_start_pos += self.stride
+
+    def get_filtered_data(self):
+        logic_peak = [self.filtered_sum[i] if i+480-240-16 in self.peaks
+                      else 0
+                      for i in range(len(self.filtered_sum))]
+        return logic_peak, self.filtered_sum

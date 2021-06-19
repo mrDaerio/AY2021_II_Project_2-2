@@ -1,23 +1,21 @@
 #:kivy 1.11
 
-<FullScalerRangeDialog>:
+<FullScaleRangeDialog>:
     auto_dismiss: False
     size_hint: 0.4, 0.4
     pos_hint: {'top': 0.5, 'right':0.5}
     title: 'FSR Selection'
-    fsr_select_spinner: _spinner
+    fsr_select_spinner: _range_spinner
     GridLayout:
         cols: 2
         spacing: 10
         padding: 20
         Label: 
-            text: 'Wave'
+            text: 'Full Scale Range'
         Spinner:
-            id: _spinner
-            text: '+/-2g'
-            values: ['+/-2g','+/-4g','+/-8g','+/-16g']
-        Widget:
-        Widget:
+            id: _range_spinner
+            text: '+/- 2 g'
+            values: ['+/- 2 g','+/- 4 g','+/- 8 g','+/- 16 g']
         Button:
             text: 'Cancel'
             on_release: root.dismiss()
@@ -38,7 +36,7 @@
         Label: 
             text: 'Sample Rate'
         Spinner:
-            values: ['1 Hz','10 Hz', '25 Hz', '50 Hz', '100 Hz', '200 Hz'] 
+            values: ['100 Hz', '200 Hz', '400 Hz', '1344 Hz'] 
             id: _sample_rate_spinner
         Button:
             text: 'Cancel'
@@ -46,3 +44,27 @@
         Button:
             text: 'Update'
             on_release: root.update_pressed()
+
+<SaveDialog>:
+    auto_dismiss: False
+    title: 'Sample Rate Selection'
+    text_input: text_input
+    BoxLayout:
+        orientation: "vertical"
+        FileChooserIconView:
+            id: filechooser
+            on_selection: text_input.text = self.selection and self.selection[0] or ''
+        TextInput:
+            id: text_input
+            size_hint_y: None
+            height: 30
+            multiline: False
+        BoxLayout:
+            size_hint_y: None
+            height: 30
+            Button:
+                text: "Cancel"
+                on_release: root.cancel()
+            Button:
+                text: "Save"
+                on_release: root.save(filechooser.path, text_input.text)
