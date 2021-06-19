@@ -66,7 +66,14 @@ class ContainerLayout(BoxLayout):
     def __init__(self, **kwargs):
         self.serial = KivySerial()
         self.serial.bind(connected=self.connection_event)
+        self.serial.bind(i2c_error=self.disable_all)
         super(ContainerLayout, self).__init__(**kwargs)
+
+    def disable_all(self, instance, value):
+        self.toolbar.disabled = True
+        self.serial.stop_streaming()
+        self.streaming_button.disabled = True
+        self.bottom_bar.update_text(instance, "I2C ERROR, CHECK ACCELEROMETER CONNECTION AND RESTART EVERYTHING")
 
     ##
     #   @brief          Callback called when bottom bar widget is displayed on the screen.

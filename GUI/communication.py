@@ -127,6 +127,8 @@ class KivySerial(EventDispatcher, metaclass=Singleton):
     #
     full_scale_range = NumericProperty(2)
 
+    i2c_error = NumericProperty(0)   #  property which defines the i2c connection error
+
     ##
     #  @brief           Initialize the class.
     #
@@ -315,6 +317,10 @@ class KivySerial(EventDispatcher, metaclass=Singleton):
                             print(f'Skipped {rep} bytes')
                         rep = 0
                         self.read_state = 1
+                    elif (b == 0xE):
+                        print("Errore i2c")
+                        self.i2c_error = 1
+
             elif (self.read_state == 1):
                 # Get six bytes*32 of acceleration data
                 data = self.port.read(6 * 32)
@@ -536,11 +542,11 @@ class Signal():
         #calculate envelope
         self.filtered_sum = np.abs(hilbert(self.filtered_sum))
         #smooth envelope with lowpass filter (adaptive)
-        fcut = (self.meanbpm//120)+2
+        fcut = (self.meanbpm//120)+3
         b,a = butter(4,fcut/nyq,'low')
         self.filtered_sum = lfilter(b,a,self.filtered_sum)
         #consider just the last approximately 3 seconds
-        self.filtered_sum = self.filtered_sum[-640:]
+        self.filtered_sum = self.filtered_sum[-480:]
         minval = min(self.filtered_sum)
         maxval = max(self.filtered_sum)
         signal_range = maxval-minval
@@ -571,13 +577,13 @@ class Signal():
         # EXTRACTION OF SIGNAL #
         ########################
         #take middle part of filter to avoid border effects
-        self.filtered_sum = self.filtered_sum[-200:-200+32]
+        self.filtered_sum = self.filtered_sum[-240-16:-240+16]
         
         #move the window by the length of the packet
         self.window_start_pos += self.stride
 
     def get_filtered_data(self):
-        logic_peak = [self.filtered_sum[i] if i+640-200 in self.peaks
+        logic_peak = [self.filtered_sum[i] if i+480-240-16 in self.peaks
                       else 0
                       for i in range(len(self.filtered_sum))]
         return logic_peak, self.filtered_sum
