@@ -1,22 +1,17 @@
-/* ========================================
- *
- * Copyright YOUR COMPANY, THE YEAR
- * All Rights Reserved
- * UNPUBLISHED, LICENSED SOFTWARE.
- *
- * CONFIDENTIAL AND PROPRIETARY INFORMATION
- * WHICH IS THE PROPERTY OF your company.
- *
- * ========================================
-*/
-
 #include "cytypes.h"
 #include "ErrorCodes.h"
 #include "stdio.h"
 #include "project.h"
 
 void error_check (ErrorCode error)
-{   if(error != 0) PWM_LED_WriteCompare(50);
+{   if(error != 0) {
+    PWM_LED_WriteCompare(50);
+    CyGlobalIntDisable;
+        for(;;)
+        {
+            UART_BT_PutChar(0xE);
+        }
+    }
     switch(error){
     case NO_ERROR:    ///< No error generated
        PWM_LED_WriteCompare(99); 

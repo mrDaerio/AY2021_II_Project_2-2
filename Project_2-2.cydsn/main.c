@@ -40,8 +40,6 @@ int main(void)
     isr_BT_StartEx(Custom_ISR_RXBT);
     PWM_LED_Start();
     
-    char message[50] = {'\0'};
-    
     CyDelay(5); //"The boot procedure is complete about 5 ms after device power-up."
     
     if (!I2C_Peripheral_IsDeviceConnected(LIS3DH_DEVICE_ADDRESS))
@@ -50,23 +48,9 @@ int main(void)
         PWM_LED_WriteCompare(LED_ON);
         
     CyDelay(10);
-    
-    /*      I2C Master Read - WHOAMI Register       */
-    uint8_t whoami_reg;
-    ErrorCode error = get_reg(LIS3DH_REG_WHOAMI, &whoami_reg);
-    error_check(error);
-    sprintf(message, "WHO AM I: %d\n", whoami_reg);
-    UART_DEBUG_PutString(message);
-    
-    /*      I2C Master Read - STATUS Register       */
-    uint8_t status_reg;
-    error = get_reg(LIS3DH_REG_STATUS2, &status_reg);
-    error_check(error);
-    sprintf(message, "STATUS REG: %d\n", status_reg);
-    UART_DEBUG_PutString(message);
-    
+        
     // Accelerometer powered down
-    error = set_datarate(LIS3DH_DATARATE_POWERDOWN);
+    ErrorCode error = set_datarate(LIS3DH_DATARATE_POWERDOWN);
     error_check(error);
     
     // Enables FIFO
