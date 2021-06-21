@@ -1,3 +1,15 @@
+/* =============================================================================
+ 
+    Electronic Technologies and Biosensors Laboratory
+    Academic Year 2020/2021 - II Semester
+    Final Project
+    GROUP_02 - Variant 2
+
+    EEPROM_functions.h: header file
+ 
+ * =============================================================================
+*/
+    
 #ifndef __EEPROM_H
     #define __EEPROM_H
     
@@ -25,4 +37,5 @@
     uint8_t Full_Scale_Read(); 
     
 #endif
+
 /* [] END OF FILE */

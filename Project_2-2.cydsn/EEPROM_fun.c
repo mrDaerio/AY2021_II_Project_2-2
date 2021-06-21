@@ -1,3 +1,20 @@
+/* =============================================================================
+ 
+    Electronic Technologies and Biosensors Laboratory
+    Academic Year 2020/2021 - II Semester
+    Final Project
+    GROUP_02 - Variant 2
+
+    EEPROM_functions.c: source file
+
+    In this file are listed the two functions to read/write the values of Sample
+    Rate and Full Scale Range from/into the EEPROM of the PSoC. The first time the
+    device is programmed the memory will be written with the first value, and after
+    that the parameter will be overwritten
+ 
+ * =============================================================================
+*/
+
 #include "EEPROM_fun.h"
 #include "project.h"
 #include "cytypes.h"

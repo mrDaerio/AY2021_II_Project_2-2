@@ -1,13 +1,13 @@
-/* ========================================
- *
- * Copyright YOUR COMPANY, THE YEAR
- * All Rights Reserved
- * UNPUBLISHED, LICENSED SOFTWARE.
- *
- * CONFIDENTIAL AND PROPRIETARY INFORMATION
- * WHICH IS THE PROPERTY OF your company.
- *
- * ========================================
+/* =============================================================================
+ 
+    Electronic Technologies and Biosensors Laboratory
+    Academic Year 2020/2021 - II Semester
+    Final Project
+    GROUP_02 - Variant 2
+
+    main.c: source file
+ 
+ * =============================================================================
 */
 
 #include "project.h"
@@ -17,13 +17,15 @@
 #include "ErrorCodes.h"
 #include "InterruptRoutines.h"
 
-
+// Definition of led value for blinking
 #define LED_ON 99
 #define LED_BLINK 50
 
+// Definition of head and tail for data packets
 #define HEAD 0xA0
 #define TAIL 0xC0
 
+// Definition of buffer size
 #define BUFFER_SIZE 194
 
 uint8_t flag = 0;
@@ -33,6 +35,8 @@ uint8_t buffer[BUFFER_SIZE];
 int main(void)
 {
     CyGlobalIntEnable; /* Enable global interrupts. */
+    
+    // Start all components
     I2C_Peripheral_Start();
     UART_DEBUG_Start();
     UART_BT_Start();
@@ -60,7 +64,6 @@ int main(void)
     buffer[0] = HEAD;
     buffer[BUFFER_SIZE-1] = TAIL;
     
-
     for(;;)
     {      
         if(flag){
@@ -74,7 +77,6 @@ int main(void)
                     buffer[2*(i + 2*FIFO_SIZE)] = z_buffer[i-1];
             }
             UART_BT_PutArray(buffer, BUFFER_SIZE);
-            // UART_DEBUG_PutArray(buffer, BUFFER_SIZE);
         }    
     }
 }

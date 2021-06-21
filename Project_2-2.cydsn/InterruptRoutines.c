@@ -1,3 +1,17 @@
+/* =============================================================================
+ 
+    Electronic Technologies and Biosensors Laboratory
+    Academic Year 2020/2021 - II Semester
+    Final Project
+    GROUP_02 - Variant 2
+
+    InterruptRoutines.c: source file
+
+    In this file are defined the interrupt routines function 
+ 
+ * =============================================================================
+*/
+
 #include "InterruptRoutines.h"
 #include "project.h"
 #include "LIS3DH.h"
@@ -6,10 +20,8 @@
 
 CY_ISR(Custom_ISR_FIFO)
 {
-    //UART_DEBUG_PutString("\nWE ARE IN THE INTERRUPT ROUTINE\n");
     Pin_INT_ClearInterrupt();
     FIFO_read();
-    
 }
 
 CY_ISR(Custom_ISR_RXBT)
@@ -20,23 +32,21 @@ CY_ISR(Custom_ISR_RXBT)
     switch(ch_received)
     {
         case 'v':
-        
-        // Retrieve the values saved in the EEPROM
+        // Retrieve the values saved in the EEPROM at connection
         datarate = Sample_Rate_Read();
         fsc = Full_Scale_Read();
         
+        // String to be able to connect to GUI
         sprintf(message, "$$$LIS %d %d", datarate, fsc);
         UART_BT_PutString(message);
-        UART_DEBUG_PutString("COMMUNICATION START\n");
             break;
 
-        case 's':
+        case 's':  // Stop condition
         error = set_datarate(LIS3DH_DATARATE_POWERDOWN);
         error_check(error);
-        UART_DEBUG_PutString("STOP\n");
             break;
 
-        case 'b': 
+        case 'b':  // Start condition
         // Set the datarate
         error = set_datarate(datarate);
         error_check(error);
@@ -44,8 +54,6 @@ CY_ISR(Custom_ISR_RXBT)
         // Set the full scale range
         error = set_range(fsc);
         error_check(error);
-        
-        UART_DEBUG_PutString("START\n");
             break;
         
         // Different possibilities for the datarate        

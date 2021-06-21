@@ -1,20 +1,26 @@
-/*
- *  @file LIS3DH.h
- *
- *  This is a library for the Adafruit LIS3DH Accel breakout board
- *
- *  Designed specifically to work with the Adafruit LIS3DH Triple-Axis
- *  Accelerometer
- *	(+-2g/4g/8g/16g)
- *
- *	This sensor communicates over I2C or SPI (our library code supports
- *  both) so you can share it with a bunch of other sensors on the same I2C bus.
- *  There's an address selection pin so you can have two accelerometers share an
- *  I2C bus.
- *
- *  Adafruit invests time and resources providing this open source code,
- *  please support Adafruit andopen-source hardware by purchasing products
- *  from Adafruit!
+/* =============================================================================
+ 
+    Electronic Technologies and Biosensors Laboratory
+    Academic Year 2020/2021 - II Semester
+    Final Project
+    GROUP_02 - Variant 2
+
+    LIS3DH.h: header file 
+
+    This is a library for the Adafruit LIS3DH Accel breakout board
+    Designed specifically to work with the Adafruit LIS3DH Triple-Axis
+    Accelerometer
+    (+-2g/4g/8g/16g)
+    This sensor communicates over I2C or SPI (our library code supports
+    both) so you can share it with a bunch of other sensors on the same I2C bus.
+    There's an address selection pin so you can have two accelerometers share an
+    I2C bus.
+    
+    Adafruit invests time and resources providing this open source code,
+    please support Adafruit andopen-source hardware by purchasing products
+    from Adafruit!
+ 
+ * =============================================================================
 */
 
 #include "cytypes.h"
@@ -23,7 +29,10 @@
 
 #ifndef __LIS3DH_H
     #define __LIS3DH_H
+    
+    // Definition of the size of the FIFO
     #define FIFO_SIZE 32
+    
     /** I2C ADDRESS/BITS **/
     #define LIS3DH_DEVICE_ADDRESS (0x18) // if SDO/SA0 is 3V, its 0x19
 
@@ -371,7 +380,8 @@
       STREAM_MODE = 0x2,
       STREAM_TO_FIFO = 0x3,      
     } lis3dh_fifo_mode_t;
-
+    
+    // Declaration of all the functions of LIS3DH.c, for further explanations check the other file
     ErrorCode set_reg (uint8_t reg, uint8_t value_reg);
     ErrorCode get_reg (uint8_t reg, uint8_t* value_reg);
     ErrorCode set_reg_masked_only (uint8_t reg, uint8_t mask, uint8_t value_reg);
