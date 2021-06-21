@@ -95,7 +95,7 @@ class LIS3DHTabbedPanelItem(TabbedPanelItem):
                 (j+1) * self.time_between_points
         self.x_axis_points = [0 for y in range(-self.n_points, 0)]
         self.y_axis_points = [0 for y in range(-self.n_points, 0)]
-        self.z_axis_points = [0 for y in range(-self.n_points, 0)]
+        #self.z_axis_points = [0 for y in range(-self.n_points, 0)]
 
         self.x_plot = LinePlot(color=(0.75, 0.4, 0.4, 1.0))
         self.x_plot.line_width = 1.2
@@ -104,14 +104,16 @@ class LIS3DHTabbedPanelItem(TabbedPanelItem):
         self.y_plot = LinePlot(color=(0.4, 0.4, 0.75, 1.0))
         self.y_plot.line_width = 1.2
         self.y_plot.points = zip(self.x_points, self.y_axis_points)
-
+        
+        '''
         self.z_plot = LinePlot(color=(0.4, 0.75, 0.4, 1.0))
         self.z_plot.line_width = 1.2
         self.z_plot.points = zip(self.x_points, self.z_axis_points)
+        '''
 
         self.graph.add_plot(self.x_plot)
         self.graph.add_plot(self.y_plot)
-        self.graph.add_plot(self.z_plot)
+        #self.graph.add_plot(self.z_plot)
 
     ##
     #   @brief          Callback called when the \ref autoscale property changes.
@@ -131,8 +133,8 @@ class LIS3DHTabbedPanelItem(TabbedPanelItem):
                 yy_points = self.x_axis_points
             elif plot_idx == 1:
                 yy_points = self.y_axis_points
-            else:
-                yy_points = self.z_axis_points
+            #else:
+                #yy_points = self.z_axis_points
             # Slice only the visible part
             if (abs(self.graph.xmin) < self.max_seconds):
                 y_points_slice = yy_points[(
@@ -282,10 +284,10 @@ class LIS3DHTabbedPanelItem(TabbedPanelItem):
 
         self.x_axis_points = [0 for y in range(-self.n_points, 0)]
         self.y_axis_points = [0 for y in range(-self.n_points, 0)]
-        self.z_axis_points = [0 for y in range(-self.n_points, 0)]
+        #self.z_axis_points = [0 for y in range(-self.n_points, 0)]
         self.x_plot.points = zip(self.x_points, self.x_axis_points)
         self.y_plot.points = zip(self.x_points, self.y_axis_points)
-        self.z_plot.points = zip(self.x_points, self.z_axis_points)
+        #self.z_plot.points = zip(self.x_points, self.z_axis_points)
         
         if (samples_per_second > 60):
             self.n_points_per_update = 5
