@@ -7,11 +7,11 @@ You can 3D print the case of the accelerometer, look in the "Case" folder for fu
 
 ###### Setup of the system
 
-![](Photos\setup.jpg)
+![](/Photos/setup.jpg)
 
 Connect the pins of the components following the table:
 
-![](Photos\pins.png)
+![](/Photos/pins.png)
 
 ###### Programming the firmware of the microcontroller
 
@@ -27,9 +27,9 @@ Now you can run the "main.py" file from a Python virtual environment and you're 
 
 You can use a rubber band to tie the sensor close to the body like so:
 
-![](Photos\band.jpg)
+![](/Photos/band.jpg)
 
-![](Photos\3DModel.gif)
+![](/Photos/3DModel.gif)
 
 ### How is the GUI structured?
 
