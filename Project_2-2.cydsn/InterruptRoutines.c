@@ -72,11 +72,6 @@ CY_ISR(Custom_ISR_RXBT)
         EEPROM_WriteByte(datarate, SAMPLE_RATE_ADDRESS);
             break;
         
-        case '7':
-        datarate = LIS3DH_DATARATE_1344Hz;
-        EEPROM_WriteByte(datarate, SAMPLE_RATE_ADDRESS);
-            break;
-        
         // Different possibilities for the full scale range
         case 'w':
         fsc = LIS3DH_RANGE_2_G;
@@ -87,16 +82,7 @@ CY_ISR(Custom_ISR_RXBT)
         fsc = LIS3DH_RANGE_4_G;
         EEPROM_WriteByte(fsc, FULL_SCALE_ADDRESS);
             break;
-        
-        case 'j':
-        fsc = LIS3DH_RANGE_8_G;
-        EEPROM_WriteByte(fsc, FULL_SCALE_ADDRESS);
-            break;
-        
-        case 'k':
-        fsc = LIS3DH_RANGE_16_G;
-        EEPROM_WriteByte(fsc, FULL_SCALE_ADDRESS);
-            break;
+
         default:
             break;
     }

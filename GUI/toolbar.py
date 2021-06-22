@@ -96,14 +96,14 @@ class FullScaleRangeDialog(Popup):
     """
     @brief Popup to allow range selection 
     """
-    fsr_select_spinner = ObjectProperty(None)
+    range_spinner = ObjectProperty(None)
 
     def __init__(self, **kwargs):
-        super(FullScaleRangeDialog, self).__init__(**kwargs)
         self.board = KivySerial()
+        super(FullScaleRangeDialog, self).__init__(**kwargs)
 
-    def on_sample_rate_spinner(self, instance, value):
-        self.fsr_select_spinner.text = f'{self.board.full_scale_range}'
+    def on_range_spinner(self, instance, value):
+        self.range_spinner.text = f'+/- {self.board.full_scale_range} g'
 
     ##
     #   @brief          Callback called when update button is pressed.
@@ -111,11 +111,7 @@ class FullScaleRangeDialog(Popup):
     #   If the board is connected, update the full scale range.
     #
     def update_pressed(self):
-        """
-        @brief Callback called when update button is pressed.
 
-        If the board is connected, update the range selection.
-        """
         if (self.board.is_connected()):
-            self.board.update_fsr_on_board(self.fsr_select_spinner.text)
+            self.board.update_fsr_on_board(self.range_spinner.text)
         self.dismiss()

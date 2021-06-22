@@ -5,7 +5,7 @@
     size_hint: 0.4, 0.4
     pos_hint: {'top': 0.5, 'right':0.5}
     title: 'FSR Selection'
-    fsr_select_spinner: _range_spinner
+    range_spinner: _range_spinner
     GridLayout:
         cols: 2
         spacing: 10
@@ -13,9 +13,8 @@
         Label: 
             text: 'Full Scale Range'
         Spinner:
+            values: ['+/- 2 g','+/- 4 g']
             id: _range_spinner
-            text: '+/- 2 g'
-            values: ['+/- 2 g','+/- 4 g','+/- 8 g','+/- 16 g']
         Button:
             text: 'Cancel'
             on_release: root.dismiss()

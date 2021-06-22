@@ -207,7 +207,7 @@ class KivySerial(EventDispatcher, metaclass=Singleton):
                     fsc = received_string.split(' ')[2]
                     self.sample_rate = {"5": 100, "6": 200, "7": 400, "9": 1344}[datarate]
                     self.signal.update_windows(self.sample_rate)
-                    #self.full_scale_range = {"0": 2, "1": 4, "2": 8, "3": 16}[fsc]
+                    self.full_scale_range = {"0": 2, "1": 4}[fsc]
                     self.message_string = 'Device found on port: {}'.format(
                         port_name)
                     self.connected = CONNECTION_STATE_FOUND
@@ -370,9 +370,7 @@ class KivySerial(EventDispatcher, metaclass=Singleton):
         except Exception as e:
             print("errore", e)
             return data
-        # temp_data = temp_data >> 6  # 6-byte shift since we are in normal mode
-        # temp_data = temp_data * 4   # Sensitivity of 4 mg/digit in normal mode, +/-2g
-        return [i / 1000 for i in temp_data]
+        return [i *(self.full_scale_range//2)/ 1000 for i in temp_data]
 
     ##
     #   @brief          Stop data streaming.
@@ -417,9 +415,6 @@ class KivySerial(EventDispatcher, metaclass=Singleton):
         fsr_dict = {
             '+/- 2 g': 'w',
             '+/- 4 g': 'x',
-            '+/- 8 g': 'j',
-            '+/- 16 g': 'k'
-
         }
         if (self.port.is_open):
             # try:
