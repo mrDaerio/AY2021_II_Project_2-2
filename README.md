@@ -11,7 +11,7 @@ You can 3D print the case of the accelerometer, look in the "Case" folder for fu
 
 Connect the pins of the components following the table:
 
-![](/Photos/pins.png)
+![](/Photos/pins.PNG)
 
 ###### Programming the firmware of the microcontroller
 
