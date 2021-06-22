@@ -64,7 +64,7 @@ class LIS3DHTabbedPanelItem(TabbedPanelItem):
         self.y_axis_n_points_collected = []  # Number of new collected points for y axis
         self.z_axis_n_points_collected = []  # Number of new collected points for z axis
         self.sample_rate = 1                 # Sample rate for data streaming
-        self.n_points_per_update = 1         # Number of new points before triggering a new update
+        self.sample_rate_damped = 1          # Damped sample rate for too high frequencies to plot
         super(LIS3DHTabbedPanelItem, self).__init__(**kwargs)
 
     ##
@@ -85,7 +85,7 @@ class LIS3DHTabbedPanelItem(TabbedPanelItem):
         self.graph.ymax = 2
         self.graph.y_grid_label = True
         # Compute number of points to show
-        self.n_points = self.n_seconds * self.sample_rate  # Number of points to plot
+        self.n_points = self.n_seconds * self.sample_rate_damped  # Number of points to plot
         # Compute time between points on x-axis
         self.time_between_points = (self.n_seconds)/float(self.n_points)
         # Initialize x and y points list
@@ -95,7 +95,6 @@ class LIS3DHTabbedPanelItem(TabbedPanelItem):
                 (j+1) * self.time_between_points
         self.x_axis_points = [0 for y in range(-self.n_points, 0)]
         self.y_axis_points = [0 for y in range(-self.n_points, 0)]
-        #self.z_axis_points = [0 for y in range(-self.n_points, 0)]
 
         self.x_plot = LinePlot(color=(0.75, 0.4, 0.4, 1.0))
         self.x_plot.line_width = 1.2
@@ -104,16 +103,9 @@ class LIS3DHTabbedPanelItem(TabbedPanelItem):
         self.y_plot = LinePlot(color=(0.4, 0.4, 0.75, 1.0))
         self.y_plot.line_width = 1.2
         self.y_plot.points = zip(self.x_points, self.y_axis_points)
-        
-        '''
-        self.z_plot = LinePlot(color=(0.4, 0.75, 0.4, 1.0))
-        self.z_plot.line_width = 1.2
-        self.z_plot.points = zip(self.x_points, self.z_axis_points)
-        '''
 
         self.graph.add_plot(self.x_plot)
         self.graph.add_plot(self.y_plot)
-        #self.graph.add_plot(self.z_plot)
 
     ##
     #   @brief          Callback called when the \ref autoscale property changes.
@@ -133,12 +125,10 @@ class LIS3DHTabbedPanelItem(TabbedPanelItem):
                 yy_points = self.x_axis_points
             elif plot_idx == 1:
                 yy_points = self.y_axis_points
-            #else:
-                #yy_points = self.z_axis_points
             # Slice only the visible part
             if (abs(self.graph.xmin) < self.max_seconds):
                 y_points_slice = yy_points[(
-                    self.max_seconds-abs(self.graph.xmin)) * self.sample_rate:]
+                    self.max_seconds-abs(self.graph.xmin)) * self.sample_rate_damped:]
             else:
                 y_points_slice = yy_points
 
@@ -220,38 +210,20 @@ class LIS3DHTabbedPanelItem(TabbedPanelItem):
         self.graph.x_ticks_major = major_ticks
         self.graph.x_ticks_minor = minor_ticks
 
-    '''
-    ##
-    #   @brief          Update plot with new packet.
-    #
-    #   @param[in]      packet: new packet received.
-    def update_plot_raw(self, packet):
-        self.x_axis_n_points_collected = packet.get_x_data()
-        self.y_axis_n_points_collected = packet.get_y_data()
-        self.z_axis_n_points_collected = packet.get_z_data()
-
-        for idx in range(len(self.x_axis_n_points_collected)):
-            self.x_axis_points.append(self.x_axis_points.pop(0))
-            self.x_axis_points[-1] = self.x_axis_n_points_collected[idx]
-            self.y_axis_points.append(self.y_axis_points.pop(0))
-            self.y_axis_points[-1] = self.y_axis_n_points_collected[idx]
-            self.z_axis_points.append(self.z_axis_points.pop(0))
-            self.z_axis_points[-1] = self.z_axis_n_points_collected[idx]
-        self.x_plot.points = zip(self.x_points, self.x_axis_points)
-        self.y_plot.points = zip(self.x_points, self.y_axis_points)
-        self.z_plot.points = zip(self.x_points, self.z_axis_points)
-
-        self.x_axis_n_points_collected = []
-        self.y_axis_n_points_collected = []
-        self.z_axis_n_points_collected = []
-
-        if (self.autoscale):
-            self.autoscale_plots()
-    '''
-
     def update_plot_filtered(self, s):
         if (s.flag_first_filter):
             self.x_axis_n_points_collected, self.y_axis_n_points_collected = s.get_filtered_data()
+
+            if self.sample_rate == 400: #plot at 200Hz
+                #make sure to not lose peaks:
+                for i in range(16):
+                    if self.x_axis_n_points_collected[i] == 0:#no peak
+                        self.x_axis_n_points_collected.pop(i)
+                        self.y_axis_n_points_collected.pop(i)
+                    else: #was a peak, remove the next one
+                        self.x_axis_n_points_collected.pop(i+1)
+                        self.y_axis_n_points_collected.pop(i+1)
+
             for idx in range(len(self.x_axis_n_points_collected)):
                 self.x_axis_points.append(self.x_axis_points.pop(0))
                 self.x_axis_points[-1] = self.x_axis_n_points_collected[idx]
@@ -272,8 +244,14 @@ class LIS3DHTabbedPanelItem(TabbedPanelItem):
     #   new value of samples per second.
     def update_sample_rate(self, samples_per_second):
         self.sample_rate = samples_per_second
+
+        if self.sample_rate == 400: #too high
+            self.sample_rate_damped = 200 #1/2
+        else:
+            self.sample_rate_damped = self.sample_rate #no correction
+
         # Compute number of points to show
-        self.n_points = self.n_seconds * self.sample_rate  # Number of points to plot
+        self.n_points = self.n_seconds * self.sample_rate_damped  # Number of points to plot
         # Compute time between points on x-axis
         self.time_between_points = (self.n_seconds)/float(self.n_points)
         # Initialize x and y points list
@@ -284,15 +262,8 @@ class LIS3DHTabbedPanelItem(TabbedPanelItem):
 
         self.x_axis_points = [0 for y in range(-self.n_points, 0)]
         self.y_axis_points = [0 for y in range(-self.n_points, 0)]
-        #self.z_axis_points = [0 for y in range(-self.n_points, 0)]
         self.x_plot.points = zip(self.x_points, self.x_axis_points)
         self.y_plot.points = zip(self.x_points, self.y_axis_points)
-        #self.z_plot.points = zip(self.x_points, self.z_axis_points)
-        
-        if (samples_per_second > 60):
-            self.n_points_per_update = 5
-        else:
-            self.n_points_per_update = 1
 
 
 class PlotSettings(BoxLayout):

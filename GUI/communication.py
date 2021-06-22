@@ -206,6 +206,7 @@ class KivySerial(EventDispatcher, metaclass=Singleton):
                     datarate = received_string.split(' ')[1]
                     fsc = received_string.split(' ')[2]
                     self.sample_rate = {"5": 100, "6": 200, "7": 400, "9": 1344}[datarate]
+                    self.signal.update_windows(self.sample_rate)
                     #self.full_scale_range = {"0": 2, "1": 4, "2": 8, "3": 16}[fsc]
                     self.message_string = 'Device found on port: {}'.format(
                         port_name)
@@ -379,11 +380,13 @@ class KivySerial(EventDispatcher, metaclass=Singleton):
     #   Stop data streaming and show statistics on collected data.
     def stop_streaming(self):
         self.is_streaming = False
+        self.port.write(STOP_STREAMING_CMD.encode('utf-8'))
+        time.sleep(0.5)
         if (self.samples_counter == 0):
             self.message_string = f'Stopped streaming data'
         else:
             self.message_string = f'Stopped streaming data. Collected {self.samples_counter:d} samples with {self.current_sample_rate:.2f} Hz sample rate.'
-        self.port.write(STOP_STREAMING_CMD.encode('utf-8'))
+        self.signal.reset()
 
     ##
     #   @brief          Update sample rate on board
@@ -394,14 +397,14 @@ class KivySerial(EventDispatcher, metaclass=Singleton):
         sample_rate_dict = {
             '100 Hz': '4',
             '200 Hz': '5',
-            '400 Hz': '6',
-            '1344 Hz': '7'
+            '400 Hz': '6'
         }
         if (self.port.is_open):
             try:
                 self.port.write(sample_rate_dict[value].encode('utf-8'))
                 self.message_string = f'Updated sample rate to {value}'
                 self.sample_rate = int(value.split(' ')[0])
+                self.signal.update_windows(self.sample_rate)
             except:
                 self.message_string = "Could not update sample rate"
 
@@ -474,7 +477,8 @@ class Signal():
         self.z_data = []
         self.window_start_pos = 0
         self.stride = 32
-        self.filter_window_length = 2080
+        self.filter_window_length = 2080 #~10s
+        self.peaks_window_length = 480 #~2.5s
         self.filtered_sum = []
         self.flag_first_filter = False
         self.peaks = []
@@ -494,17 +498,24 @@ class Signal():
     #   @brief          Get z axis acceleration.
     def get_z_data(self):
         return self.z_data
+    
+    def update_windows(self,sample_rate):
+        self.filter_window_length = int(2080 * sample_rate / 200) #keep always 10s window
+        self.peaks_window_length = int(480 * sample_rate / 200) #keep always 2.5s window
+
+    def reset(self):
+        self.window_start_pos = len(self.x_data)
+        self.flag_first_filter = False
 
     def append_data(self, x, y, z):
         self.x_data += x
         self.y_data += y
         self.z_data += z
-        if (len(self.x_data)>=self.filter_window_length):
+        if (len(self.x_data)-self.window_start_pos)>=self.filter_window_length:
             self.filter()
             self.flag_first_filter = True
 
     def filter(self):
-
         #select a window of data to be considered
         x_windowed = self.x_data[self.window_start_pos:self.window_start_pos+self.filter_window_length]
         y_windowed = self.y_data[self.window_start_pos:self.window_start_pos+self.filter_window_length]
@@ -545,8 +556,8 @@ class Signal():
         fcut = (self.meanbpm//120)+3
         b,a = butter(4,fcut/nyq,'low')
         self.filtered_sum = lfilter(b,a,self.filtered_sum)
-        #consider just the last approximately 3 seconds
-        self.filtered_sum = self.filtered_sum[-480:]
+        #consider just the last approximately 2 seconds
+        self.filtered_sum = self.filtered_sum[-self.peaks_window_length:]
         minval = min(self.filtered_sum)
         maxval = max(self.filtered_sum)
         signal_range = maxval-minval
@@ -560,11 +571,11 @@ class Signal():
             ###################
             # BPM CALCULATION #
             ###################
-            if self.window_start_pos % 192 == 0 and self.peaks != []: #update approximately every second
+            board = KivySerial()
+            if self.window_start_pos % (192 * board.sample_rate//200) == 0 and self.peaks != []: #update approximately every second
                 #calculate RR intervals (in samples)
                 RR = [t - s for s, t in zip(self.peaks, self.peaks[1:])]
                 #calculate RR intervals (in seconds)
-                board = KivySerial()
                 RR = [i/board.current_sample_rate if board.current_sample_rate != 0 else 0 for i in RR]
                 #convert to bpm
                 self.meanbpm = 60/np.mean(RR)
@@ -576,14 +587,14 @@ class Signal():
         ########################
         # EXTRACTION OF SIGNAL #
         ########################
-        #take middle part of filter to avoid border effects
-        self.filtered_sum = self.filtered_sum[-240-16:-240+16]
+        #take middle part of window to avoid border effects
+        self.filtered_sum = self.filtered_sum[-self.peaks_window_length//2-16:-self.peaks_window_length//2+16]
         
         #move the window by the length of the packet
         self.window_start_pos += self.stride
 
     def get_filtered_data(self):
-        logic_peak = [self.filtered_sum[i] if i+480-240-16 in self.peaks
+        logic_peak = [self.filtered_sum[i] if i+self.peaks_window_length//2-16 in self.peaks
                       else 0
                       for i in range(len(self.filtered_sum))]
-        return logic_peak, self.filtered_sum
+        return logic_peak, list(self.filtered_sum)
