@@ -52,9 +52,20 @@ All the packets that need to be installed in the virtual environment to make the
 
 Run the "main.py" file from a Python virtual environment to start the GUI. This window should appear:
 
+![](/Photos/start.png)
+
+### Connection
+
+Once the connection with the bluetooth module has been established, the graphical interface should look like this:
+
+![](/Photos/connection.png)
+
+As it is possible to notice, the selection buttons can now be pressed to change the parameters of the microcontroller, and start button on the top right corner enables the data streaming and the graphical representation of the data.
+To interrput the connection, simply press the stop button. The data export button allows to save the current session locally in the computer.
 
 ### How is the GUI structured?
 
+Since the GUI code can be complicated at first glance, this graph tries to simplify and clarify every connection inside the code.
 [Map of the GUI](https://miro.com/app/board/o9J_lDBEVHY=/)
 
 ## Students Authors of the Project
