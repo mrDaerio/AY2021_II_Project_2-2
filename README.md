@@ -36,20 +36,28 @@ A 3D animation shows how the accelerometer needs to be placed on the body, in or
 
 ## Programming the Microcontroller
 
-Double click on the file "Workspace01.cywrk", PSoC Creator will automatically open. Compile the project and upload it on the board.
+Once the repository has been downloaded on the computer, it's possible to program the kit through PSoC creator. To do that, simply double click on the file "Workspace01.cywrk",  and PSoC Creator will automatically open. Compile the project and upload it on the board. In the Top Design file is also possible to find other information and visual representation on how to connect the components to the board, if not clear.
+Mind that a specific library has been used, called AnnotationLibrary. You might have to add it in order to correctly build the project and program the device.
+
+If all the connection are correct, at the end of the programming phase you should have a red led blinking on the bluetooth module and the blue led of the microcontroller lighted up. If the blue led is blinking, it means that the accelerometer is not connected properly.
 
 ## GUI
 
-Check the readme in the "GUI" folder and install the needed packages to make the interface work. You also need to connect the Bluetooth module to your PC, you can follow the same procedure you would do when pairing some wireless headphones. The module will be called "HC-05", but the name may differ.
+The GUI has been developed with kivy, and allows to display the data retrieved by the microcontroller and elaborate them to extract the heart rate of the subject. Through the interface is possible also to have agraphical representation of the signal rielaborated, in order to have a clear representation of the beating, and also allows to change internal parameter of the microcontroller, such as the sample rate and the full scale range. Another feature is the data export of the three raw channels of the accelerometers in a .csv file, which can be used for further studies or furhter data elaboration on other platforms.
+The microcontroller is also able to save the last parameter that the user has set, and retrieve them for the next session.
 
-Now you can run the "main.py" file from a Python virtual environment and you're ready to go! 
+All the packets that need to be installed in the virtual environment to make the interface work are listed in the folder named "GUI". The bluetooth module connection with the computer can be established in the bluetooth settings, as any other bluetooth device. The module is called "HC-05", but the name may differ.
+
+### First Run
+
+Run the "main.py" file from a Python virtual environment to start the GUI. This window should appear:
 
 
 ### How is the GUI structured?
 
 [Map of the GUI](https://miro.com/app/board/o9J_lDBEVHY=/)
 
-### Students
+## Students Authors of the Project
 
 * Dario Comini
 
