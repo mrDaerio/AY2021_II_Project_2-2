@@ -232,8 +232,7 @@ class KivySerial(EventDispatcher, metaclass=Singleton):
             self.message_string = f'Error when opening port'
             return -1
         if (self.port.is_open):
-            self.message_string = f'Device connected at {self.port_name}, Sample rate to {self.sample_rate} Hz'
-            #self.update_sample_rate_on_board('200 Hz')
+            self.message_string = f'Device connected at {self.port_name}, last sample rate at {self.sample_rate} Hz, fsr at +-{self.full_scale_range} g'
             self.connected = CONNECTION_STATE_CONNECTED
             return 0
         return -1
@@ -254,6 +253,7 @@ class KivySerial(EventDispatcher, metaclass=Singleton):
                 self.read_state = 0
                 self.skipped_bytes = 0
                 self.samples_counter = 0
+                self.signal.reset()         #reset filtered signal
                 read_thread = threading.Thread(target=self.collect_data)
                 read_thread.daemon = True
                 read_thread.start()
@@ -350,11 +350,11 @@ class KivySerial(EventDispatcher, metaclass=Singleton):
     ##
     #   @brief          Convert acceleration data in float format.
     #
-    #   This function converts raw bytes into a float value representing
+    #   This function converts raw packets of bytes into an array of float values representing
     #   acceleration data. Check is done on negative/positive data based
     #   on 2's complement notation. Conversion is based on normal mode,
     #   +/- 2g settings.
-    #   @param[in]      data: two bytes representing acceleration
+    #   @param[in]      data: array of two bytes representing acceleration
     #   @return         float formatted acceleration value
     #
     def convert_acc_data(self, data):
@@ -383,8 +383,7 @@ class KivySerial(EventDispatcher, metaclass=Singleton):
         if (self.samples_counter == 0):
             self.message_string = f'Stopped streaming data'
         else:
-            self.message_string = f'Stopped streaming data. Collected {self.samples_counter:d} samples with {self.current_sample_rate:.2f} Hz sample rate.'
-        self.signal.reset()
+            self.message_string = f'Stopped streaming data. Collected {self.samples_counter:d} samples with {self.current_sample_rate:.2f} Hz, +-{self.full_scale_range} g'
 
     ##
     #   @brief          Update sample rate on board
@@ -463,21 +462,28 @@ class LIS3DHDataPacket():
     def get_z_data(self):
         return self.z_data
 
-
+##
+#   @brief          Signal class used for filtered and raw data
+#
+#   This class contains all the information about the processing of
+#   raw data. Performs PCA on a sliding time window of 10s, filtering
+#   of the principal component to extract HR signal, 
+#   peak detection on the last part of the window, and computing of HR
+#   in bpm 
 class Signal():
 
     def __init__(self):
-        self.x_data = []
-        self.y_data = []
-        self.z_data = []
-        self.window_start_pos = 0
-        self.stride = 32
-        self.filter_window_length = 2080 #~10s
-        self.peaks_window_length = 480 #~2.5s
-        self.filtered_sum = []
-        self.flag_first_filter = False
-        self.peaks = []
-        self.meanbpm = 0
+        self.x_data = []                    #contains the whole vector of x raw data received for later export
+        self.y_data = []                    #contains the whole vector of y raw data received for later export
+        self.z_data = []                    #contains the whole vector of z raw data received for later export
+        self.window_start_pos = 0           #starting position of the sliding window for filtering
+        self.stride = 32                    #stride {=passo} of the sliding window
+        self.filter_window_length = 2080    #~10s duration of filtering window
+        self.peaks_window_length = 480      #~2.5s duration of peak-detection window
+        self.filtered_sum = []              #contains the filtered data
+        self.flag_first_filter = False      #flag to start filtering when enough raw data is collected (~10s of data)
+        self.peaks = []                     #contains the indeces of peaks detected
+        self.meanbpm = 0                    #contains the value of bpm computed
 
     ##
     #   @brief          Get x axis acceleration.
@@ -493,15 +499,24 @@ class Signal():
     #   @brief          Get z axis acceleration.
     def get_z_data(self):
         return self.z_data
-    
+    ##
+    #   @brief          Update window lenght in samples based on datarate
     def update_windows(self,sample_rate):
-        self.filter_window_length = int(2080 * sample_rate / 200) #keep always 10s window
-        self.peaks_window_length = int(480 * sample_rate / 200) #keep always 2.5s window
-
+        self.filter_window_length = int(2080 * sample_rate / 200)   #keeps always 10s window in proportion with samples
+        self.peaks_window_length = int(480 * sample_rate / 200)     #keeps always 2.5s window in proportion with samples
+    ##
+    #   @brief          reset all data at new streaming
     def reset(self):
-        self.window_start_pos = len(self.x_data)
+        self.x_data = []
+        self.y_data = []
+        self.z_data = []
+        self.window_start_pos = 0
         self.flag_first_filter = False
 
+    ##
+    #   @brief          saves the raw data to the raw-data vectors. 
+    #                   If they reach the time window for filtering 
+    #                   then filters them
     def append_data(self, x, y, z):
         self.x_data += x
         self.y_data += y
@@ -510,7 +525,14 @@ class Signal():
             self.filter()
             self.flag_first_filter = True
 
+    ##
+    #   @brief          Filters raw data by:
+    #                       -PCA
+    #                       -band-pass filter
+    #                       -peak detection
+    #                       -bpm calculation
     def filter(self):
+        board = KivySerial()
         #select a window of data to be considered
         x_windowed = self.x_data[self.window_start_pos:self.window_start_pos+self.filter_window_length]
         y_windowed = self.y_data[self.window_start_pos:self.window_start_pos+self.filter_window_length]
@@ -535,9 +557,9 @@ class Signal():
         #    FILTER    #
         ################
         #calculate filter coefficients
-        nyq = 0.5 * 200
+        nyq = 0.5 * board.sample_rate         #nyquist frequency
         low = 10 / nyq
-        high = 50 / nyq
+        high = 49 / nyq
         b, a = butter(6, [low, high], btype='band')
         #filter the principal component
         self.filtered_sum = lfilter(b, a, principal_component)
@@ -566,7 +588,7 @@ class Signal():
             ###################
             # BPM CALCULATION #
             ###################
-            board = KivySerial()
+            
             if self.window_start_pos % (192 * board.sample_rate//200) == 0 and self.peaks != []: #update approximately every second
                 #calculate RR intervals (in samples)
                 RR = [t - s for s, t in zip(self.peaks, self.peaks[1:])]
@@ -588,6 +610,9 @@ class Signal():
         #move the window by the length of the packet
         self.window_start_pos += self.stride
 
+    ##
+    #   @brief          Sends filtered data for plotting
+    #                   also sends a signal with peak positions
     def get_filtered_data(self):
         logic_peak = [self.filtered_sum[i] if i+self.peaks_window_length//2-16 in self.peaks
                       else 0

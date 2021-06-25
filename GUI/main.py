@@ -66,9 +66,13 @@ class ContainerLayout(BoxLayout):
     def __init__(self, **kwargs):
         self.serial = KivySerial()
         self.serial.bind(connected=self.connection_event)
-        self.serial.bind(i2c_error=self.disable_all)
+        self.serial.bind(i2c_error=self.disable_all) #property to disable buttons when i2C error occurs
         super(ContainerLayout, self).__init__(**kwargs)
 
+    ##
+    #   @brief          Disable function
+    #
+    #   Blocks the gui if i2c error is detected during streaming
     def disable_all(self, instance, value):
         self.toolbar.disabled = True
         self.serial.stop_streaming()
