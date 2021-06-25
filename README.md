@@ -43,7 +43,7 @@ If all the connection are correct, at the end of the programming phase you shoul
 
 ## GUI
 
-The GUI has been developed with kivy, and allows to display the data retrieved by the microcontroller and elaborate them to extract the heart rate of the subject. Through the interface is possible also to have agraphical representation of the signal rielaborated, in order to have a clear representation of the beating, and also allows to change internal parameter of the microcontroller, such as the sample rate and the full scale range. Another feature is the data export of the three raw channels of the accelerometers in a .csv file, which can be used for further studies or furhter data elaboration on other platforms.
+The GUI has been developed with kivy, and allows to display the data retrieved by the microcontroller and elaborate them to extract the heart rate of the subject. Through the interface is possible also to have a graphical representation of the signal rielaborated, in order to have a clear representation of the beating, and also allows to change internal parameter of the microcontroller, such as the sample rate and the full scale range. Another feature is the data export of the three raw channels of the accelerometers in a .csv file, which can be used for further studies or further data elaboration on other platforms.
 The microcontroller is also able to save the last parameter that the user has set, and retrieve them for the next session.
 
 All the packets that need to be installed in the virtual environment to make the interface work are listed in the folder named "GUI". The bluetooth module connection with the computer can be established in the bluetooth settings, as any other bluetooth device. The module is called "HC-05", but the name may differ.
@@ -62,6 +62,8 @@ Once the connection with the bluetooth module has been established, the graphica
 
 As it is possible to notice, the selection buttons can now be pressed to change the parameters of the microcontroller, and start button on the top right corner enables the data streaming and the graphical representation of the data.
 To interrput the connection, simply press the stop button. The data export button allows to save the current session locally in the computer.
+Note that you have to wait about 10 seconds before seeing any plot on the GUI because vectors need to be filled and data needs to be processed.
+The exported data saved in the csv file will contain all the data of the last acquisition (time between start and stop commands).
 
 ### How is the GUI structured?
 
