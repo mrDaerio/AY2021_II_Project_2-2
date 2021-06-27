@@ -61,8 +61,15 @@ Once the connection with the bluetooth module has been established, the graphica
 ![](/Photos/connection.png)
 
 As it is possible to notice, the selection buttons can now be pressed to change the parameters of the microcontroller, and start button on the top right corner enables the data streaming and the graphical representation of the data.
+
+The GUI should visualize the signal in this way:
+
+![](/Photos/signal.png)
+
 To interrput the connection, simply press the stop button. The data export button allows to save the current session locally in the computer.
+
 Note that you have to wait about 10 seconds before seeing any plot on the GUI because vectors need to be filled and data needs to be processed.
+
 The exported data saved in the csv file will contain all the data of the last acquisition (time between start and stop commands).
 
 ### How is the GUI structured?
