@@ -32,6 +32,7 @@
     hr_label: _heart_rate
     hr_min: _hr_min
     hr_max: _hr_max
+    hr_avg: _hr_avg
 
     GridLayout:
         cols: 2
@@ -83,18 +84,23 @@
             text: ''
             color: 0, 0, 0, 1.0
         PlotSettingsLabel:
-            text: 'min HR'
+            text: 'Min HR'
         Label:
             id: _hr_min
             text: ''
             color: 0, 0, 0, 1.0
         PlotSettingsLabel:
-            text: 'max HR'
+            text: 'Max HR'
         Label:
             id: _hr_max
             text: ''
             color: 0, 0, 0, 1.0
-            
+        PlotSettingsLabel:
+            text: 'Average HR'
+        Label:
+            id: _hr_avg
+            text: ''
+            color: 0, 0, 0, 1.0
 
 <PlotSettingsLabel@Label>:
     canvas.before:

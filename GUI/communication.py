@@ -484,6 +484,7 @@ class Signal():
         self.flag_first_filter = False      #flag to start filtering when enough raw data is collected (~10s of data)
         self.peaks = []                     #contains the indeces of peaks detected
         self.meanbpm = 0                    #contains the value of bpm computed
+        self.meanbpmvect = []
 
     ##
     #   @brief          Get x axis acceleration.
@@ -512,6 +513,8 @@ class Signal():
         self.z_data = []
         self.window_start_pos = 0
         self.flag_first_filter = False
+        self.meanbpmvect = []
+
 
     ##
     #   @brief          saves the raw data to the raw-data vectors. 
@@ -581,7 +584,7 @@ class Signal():
         if (signal_range>0.007): # if above threshold look for peaks
             prominence = 0.5 * signal_range
             self.peaks = find_peaks(self.filtered_sum,
-                                    distance=50,
+                                    distance=50 * board.sample_rate // 200,
                                     prominence=prominence)
             self.peaks = self.peaks[0]
 
@@ -596,6 +599,7 @@ class Signal():
                 RR = [i/board.current_sample_rate if board.current_sample_rate != 0 else 0 for i in RR]
                 #convert to bpm
                 self.meanbpm = 60/np.mean(RR)
+                self.meanbpmvect.append(self.meanbpm)
         else:
             self.peaks = []
             self.meanbpm = 0

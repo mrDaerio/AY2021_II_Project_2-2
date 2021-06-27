@@ -9,6 +9,7 @@ from kivy.properties import BooleanProperty, ObjectProperty, NumericProperty  # 
 import re
 from kivy.garden.graph import LinePlot  # pylint:disable=no-name-in-module, import-error
 from math import pow, isclose
+from communication import KivySerial
 
 ##
 #   @brief              Main tabbed panel to show tabbed items in the GUI.
@@ -140,7 +141,7 @@ class LIS3DHTabbedPanelItem(TabbedPanelItem):
 
         y_max = (int(y_max * 100)+1)/100 #correct error on autoscale for y_max format
         y_min = int(y_min * 100)/100 #correct error on autoscale for y_max format
-        
+
         if (y_min != y_max):
             min_val, max_val, major_ticks, minor_ticks = self.get_bounds_and_ticks(
                 y_min, y_max, 10)
@@ -303,21 +304,22 @@ class PlotSettings(BoxLayout):
     hr_label = ObjectProperty(None)
     hr_min = ObjectProperty(None)
     hr_max = ObjectProperty(None)
-
+    hr_avg = ObjectProperty(None)
     ##
     #   @brief          Update current text and display new received string.
     #
     #   @param[in]      value: the new string to be shown.
     def update_HR_label(self, value):
+        board = KivySerial()
         self.hr_label.text = value
-        for x in self.hr_min,self.hr_max:
-            if x.text == '' or x.text == '-':
-                x.text=value
-        if value!= '-' and value != '':
-            if value < self.hr_min.text:
-                self.hr_min.text = value
-            if value > self.hr_max.text:
-                self.hr_max.text = value
+        if board.signal.meanbpmvect != []:
+            self.hr_min.text = str(int(min(board.signal.meanbpmvect)))
+            self.hr_max.text = str(int(max(board.signal.meanbpmvect)))
+            self.hr_avg.text = str(int(sum(board.signal.meanbpmvect)/len(board.signal.meanbpmvect)))
+        else:
+            self.hr_min.text = '-'
+            self.hr_max.text = '-'
+            self.hr_avg.text = '-'
 
     def __init__(self, **kwargs):
         super(PlotSettings, self).__init__(**kwargs)
